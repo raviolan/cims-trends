@@ -1,6 +1,10 @@
 import {
+  addCustomTrendReferenceCreator,
   addTrendTopic,
+  clearCustomTrendBoard,
+  createCustomTrendBoard,
   removeTrendTopic,
+  selectTrendBoard,
   setActiveTopic,
   setCreatorView,
   setGlobalView,
@@ -43,6 +47,62 @@ assert(
 setTrendSearch("desk setup");
 assert("Search mode can be set", state.trendMode === "search");
 assert("Search trend renders", renderTrendExploration().includes("desk setup"));
+
+setTrendGenre("Fashion & beauty");
+createCustomTrendBoard();
+const firstBoardId = state.activeTrendBoardId;
+addTrendTopic(
+  `custom:${firstBoardId}:genre:fashion & beauty`,
+  "editorial glam",
+);
+addCustomTrendReferenceCreator(firstBoardId, "ref-nikkie");
+const customTrend = renderTrendExploration();
+assert(
+  "Custom Trend Set board renders",
+  customTrend.includes("Custom Trend Set"),
+);
+assert("Keyword cloud renders", customTrend.includes("Keyword cloud"));
+assert("Reference creators render", customTrend.includes("Reference creators"));
+assert("Custom keyword renders", customTrend.includes("editorial glam"));
+assert("Reference creator renders", customTrend.includes("@nikkietutorials"));
+setActiveTopic("trend", "editorial glam");
+removeTrendTopic(
+  `custom:${firstBoardId}:genre:fashion & beauty`,
+  "editorial glam",
+);
+assert(
+  "Custom keyword removal clears active topic",
+  state.activeTopic.label === "",
+);
+clearCustomTrendBoard(firstBoardId);
+assert(
+  "Custom Trend Set clears board inputs",
+  state.customTrendBoards[0].keywords.length === 0 &&
+    state.customTrendBoards[0].referenceCreatorIds.length === 0,
+);
+createCustomTrendBoard();
+const secondBoardId = state.activeTrendBoardId;
+addTrendTopic(`custom:${secondBoardId}:genre:fashion & beauty`, "board two");
+selectTrendBoard(firstBoardId);
+assert(
+  "First custom board keeps its own keywords",
+  !renderTrendExploration().includes("board two"),
+);
+selectTrendBoard(secondBoardId);
+assert(
+  "Second custom board restores its keywords",
+  renderTrendExploration().includes("board two"),
+);
+selectTrendBoard("main");
+assert(
+  "Main board uses standard layout",
+  !renderTrendExploration().includes("Reference creators"),
+);
+createCustomTrendBoard();
+createCustomTrendBoard();
+createCustomTrendBoard();
+createCustomTrendBoard();
+assert("Custom board limit is enforced", state.customTrendBoards.length === 5);
 
 setGlobalView("creator-profile");
 setCreatorView("overview");

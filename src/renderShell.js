@@ -1,5 +1,6 @@
 import { entityItems, globalNav } from "./data/nav.js";
-import { escapeHtml, segmentedButton } from "./helpers.js";
+import { customTrendReferenceCreators } from "./data/customTrendSet.js";
+import { escapeAttribute, escapeHtml, segmentedButton } from "./helpers.js";
 import { currentTrendLabel } from "./renderTrendExploration.js";
 import { state } from "./state.js";
 
@@ -84,20 +85,42 @@ function renderTrendRail() {
       <div class="creator-meta">Social intelligence workspace</div>
     </div>
     <div class="entity-group-title">Focus</div>
-    <div class="trend-rail-list">
-      <div class="trend-rail-item">
-        <span>Mode</span>
-        <strong>${state.trendMode === "search" ? "Keyword search" : "Genre benchmark"}</strong>
-      </div>
-      <div class="trend-rail-item">
-        <span>Selection</span>
-        <strong>${escapeHtml(currentTrendLabel())}</strong>
-      </div>
-    </div>
+    ${renderFocusBoardList()}
     <div class="entity-bottom">
       Curated intelligence view
       <div class="muted">Trend and creator signals</div>
     </div>
+  `;
+}
+
+function renderFocusBoardList() {
+  return `
+    <div class="focus-board-list">
+      <button class="focus-board-item ${state.activeTrendBoardId === "main" ? "active" : ""}" type="button" data-trend-board="main">
+        <span>Main board</span>
+        <strong>Genre benchmark</strong>
+        <small>${escapeHtml(currentTrendLabel())}</small>
+      </button>
+      ${state.customTrendBoards.map(renderFocusCustomBoard).join("")}
+      ${
+        state.customTrendBoards.length < 5
+          ? `<button class="focus-board-create" type="button" data-create-trend-board>New custom set</button>`
+          : `<div class="focus-board-limit">5 custom sets active</div>`
+      }
+    </div>
+  `;
+}
+
+function renderFocusCustomBoard(board) {
+  const selectedReferences = customTrendReferenceCreators.filter((creator) =>
+    board.referenceCreatorIds.includes(creator.id),
+  );
+  return `
+    <button class="focus-board-item ${state.activeTrendBoardId === board.id ? "active" : ""}" type="button" data-trend-board="${escapeAttribute(board.id)}">
+      <span>Custom board</span>
+      <strong>${escapeHtml(board.name)}</strong>
+      <small>${board.keywords.length} keywords · ${selectedReferences.length} creators</small>
+    </button>
   `;
 }
 

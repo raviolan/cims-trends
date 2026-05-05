@@ -408,7 +408,7 @@ export const fallbackCreatorResults = [
     platform: "instagram",
     handle: "@aiautomationida",
     name: "Ida Lindqvist",
-    bio: "AI workflow templates, app reviews, automation demos, and creator tool comparisons.",
+    bio: "AI workflow templates, app reviews, automation walkthroughs, and creator tool comparisons.",
     avatarInitials: "IL",
     avatarTone: "blue",
     followers: 246000,

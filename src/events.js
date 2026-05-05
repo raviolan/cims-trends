@@ -1,15 +1,21 @@
 import {
   addTrendTopic,
+  addCustomTrendReferenceCreator,
   applyCreatorSuggestion,
+  clearCustomTrendBoard,
   clearCreatorResultControls,
+  createCustomTrendBoard,
+  removeCustomTrendReferenceCreator,
   removeCreatorResultFilter,
   removeTrendTopic,
   setActiveTopic,
   setCreatorResultSearch,
   setCreatorResultSort,
   setCreatorView,
+  setCustomTrendCreatorSearch,
   setGlobalView,
   setSegmentValue,
+  selectTrendBoard,
   setTrendGenre,
   setTrendSearch,
   toggleAddedCreator,
@@ -37,6 +43,10 @@ function handleClick(event) {
     return update(() => setCreatorView(target.dataset.view));
   if (target.dataset.genre)
     return update(() => setTrendGenre(target.dataset.genre));
+  if (target.dataset.trendBoard)
+    return update(() => selectTrendBoard(target.dataset.trendBoard));
+  if (target.dataset.createTrendBoard !== undefined)
+    return update(createCustomTrendBoard);
   if (target.dataset.topic)
     return update(() =>
       setActiveTopic(
@@ -75,6 +85,24 @@ function handleClick(event) {
     return update(() => toggleSavedCreator(target.dataset.creatorSave));
   if (target.dataset.creatorAdd)
     return update(() => toggleAddedCreator(target.dataset.creatorAdd));
+  if (target.dataset.customReferenceAdd)
+    return update(() =>
+      addCustomTrendReferenceCreator(
+        target.dataset.customBoard,
+        target.dataset.customReferenceAdd,
+      ),
+    );
+  if (target.dataset.customReferenceRemove) {
+    event.stopPropagation();
+    return update(() =>
+      removeCustomTrendReferenceCreator(
+        target.dataset.customBoard,
+        target.dataset.customReferenceRemove,
+      ),
+    );
+  }
+  if (target.dataset.customTrendClear !== undefined)
+    return update(() => clearCustomTrendBoard(target.dataset.customBoard));
 
   const segmentItem = target.closest("[data-segment] [data-value]");
   if (segmentItem) {
@@ -109,6 +137,16 @@ function handleSubmit(event) {
     event.preventDefault();
     return update(() =>
       setCreatorResultSearch(new FormData(form).get("creatorResultSearch")),
+    );
+  }
+
+  if (form.matches("[data-custom-reference-search]")) {
+    event.preventDefault();
+    return update(() =>
+      setCustomTrendCreatorSearch(
+        form.dataset.customBoard,
+        new FormData(form).get("customTrendCreatorSearch"),
+      ),
     );
   }
 }

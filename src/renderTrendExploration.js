@@ -5,6 +5,7 @@ import {
   creatorResultsByGenre,
   fallbackCreatorResults,
 } from "./data/creatorResults.js";
+import { customTrendReferenceCreators } from "./data/customTrendSet.js";
 import {
   fallbackTrendAudience,
   relatedTopicsForSearch,
@@ -17,6 +18,7 @@ import {
 import {
   escapeAttribute,
   escapeHtml,
+  formatCompactNumber,
   formatPercent,
   segmentedButton,
 } from "./helpers.js";
@@ -68,18 +70,7 @@ export function renderTrendExploration() {
       </div>
     </section>
 
-    <section>
-      ${renderCommonTopicCloud(`${currentTrendLabel()} Topics`, topics, {
-        scope: "trend",
-        contextKey: topicContextKey,
-        editable: true,
-        removable: true,
-        note:
-          state.trendMode === "search"
-            ? "Related terms from keyword exploration"
-            : "Top keywords for the selected genre",
-      })}
-    </section>
+    ${activeCustomTrendBoard() ? renderCustomTrendSetSection(topicContextKey, topics) : renderStandardTopicCloudSection(topicContextKey, topics)}
 
     <section>
       <div class="section-head">
@@ -96,6 +87,125 @@ export function renderTrendExploration() {
     ${renderTrendAudienceSection()}
 
     ${renderCreatorMatchesSection()}
+  `;
+}
+
+function renderStandardTopicCloudSection(topicContextKey, topics) {
+  return `
+    <section>
+      ${renderCommonTopicCloud(`${currentTrendLabel()} Topics`, topics, {
+        scope: "trend",
+        contextKey: topicContextKey,
+        editable: true,
+        removable: true,
+        note:
+          state.trendMode === "search"
+            ? "Related terms from keyword exploration"
+            : "Top keywords for the selected genre",
+      })}
+    </section>
+  `;
+}
+
+function renderCustomTrendSetSection(topicContextKey, topics) {
+  return `
+    <section class="custom-trend-set-grid">
+      <div class="custom-keyword-card">
+        ${renderCommonTopicCloud("Keyword cloud", topics, {
+          scope: "trend",
+          contextKey: topicContextKey,
+          editable: true,
+          removable: true,
+          note: "Keywords and reference creator signals shaping this board",
+        })}
+      </div>
+      ${renderReferenceCreatorsCard()}
+    </section>
+  `;
+}
+
+function renderReferenceCreatorsCard() {
+  const board = activeCustomTrendBoard();
+  const suggestions = referenceCreatorSuggestions();
+  const selected = selectedReferenceCreators();
+  return `
+    <article class="chart-card reference-creators-card">
+      <div class="card-toolbar">
+        <div>
+          <h3 class="card-title">Reference creators</h3>
+          <div class="card-note">Add creator references to shape the trend context</div>
+        </div>
+        ${
+          selected.length || board.keywords.length
+            ? `<button class="secondary-button" type="button" data-custom-trend-clear data-custom-board="${escapeAttribute(board.id)}">Clear</button>`
+            : ""
+        }
+      </div>
+
+      <form class="reference-creator-search" data-custom-reference-search data-custom-board="${escapeAttribute(board.id)}">
+        <label class="control-label" for="custom-reference-search">Creator search</label>
+        <div class="search-row">
+          <input id="custom-reference-search" name="customTrendCreatorSearch" type="search" placeholder="Search creator or handle" value="${escapeAttribute(
+            board.creatorSearch,
+          )}" />
+          <button class="primary-button" type="submit">Search</button>
+        </div>
+      </form>
+
+      <div class="reference-creator-suggestions">
+        ${
+          suggestions.length
+            ? suggestions.map(renderReferenceCreatorSuggestion).join("")
+            : renderReferenceCreatorEmptyState()
+        }
+      </div>
+
+      <div class="selected-reference-creators">
+        ${
+          selected.length
+            ? selected.map(renderSelectedReferenceCreator).join("")
+            : `<div class="reference-empty">No reference creators selected</div>`
+        }
+      </div>
+    </article>
+  `;
+}
+
+function renderReferenceCreatorSuggestion(creator) {
+  const board = activeCustomTrendBoard();
+  return `
+    <article class="reference-creator-suggestion">
+      <div class="creator-result-avatar ${creator.avatarTone}">${escapeHtml(creator.avatarInitials)}</div>
+      <div>
+        <strong>${escapeHtml(creator.handle)}</strong>
+        <span>${escapeHtml(creator.name)} · ${escapeHtml(creator.category)}</span>
+      </div>
+      <button class="secondary-button" type="button" data-custom-reference-add="${escapeAttribute(creator.id)}" data-custom-board="${escapeAttribute(board.id)}">Add</button>
+    </article>
+  `;
+}
+
+function renderSelectedReferenceCreator(creator) {
+  const board = activeCustomTrendBoard();
+  return `
+    <article class="selected-reference-creator">
+      <div class="creator-result-avatar ${creator.avatarTone}">${escapeHtml(creator.avatarInitials)}</div>
+      <div class="selected-reference-copy">
+        <strong>${escapeHtml(creator.handle)}</strong>
+        <span>${escapeHtml(platformLabel(creator.platform))} · ${escapeHtml(creator.name)}</span>
+        <p>${escapeHtml(creator.category || creator.shortBio)}</p>
+      </div>
+      <button class="topic-word-remove selected-reference-remove" type="button" data-custom-reference-remove="${escapeAttribute(creator.id)}" data-custom-board="${escapeAttribute(board.id)}" aria-label="Remove ${escapeAttribute(creator.handle)}">x</button>
+    </article>
+  `;
+}
+
+function renderReferenceCreatorEmptyState() {
+  return `
+    <div class="reference-creator-empty">
+      <strong>No matching creator references</strong>
+      <span>Try another creator name, handle, platform, or category.</span>
+    </div>
   `;
 }
 
@@ -315,6 +425,21 @@ function currentCreatorMatchContext() {
     };
   }
 
+  const activeBoard = activeCustomTrendBoard();
+  if (activeBoard && hasCustomTrendInputs()) {
+    const customLabels = [
+      ...activeBoard.keywords,
+      ...selectedReferenceCreators().map((creator) => creator.handle),
+    ];
+    return {
+      type: "custom",
+      label: customLabels.length
+        ? `${activeBoard.name}: ${customLabels.slice(0, 3).join(", ")}`
+        : activeBoard.name,
+      suggestion: activeBoard.keywords[0] || "",
+    };
+  }
+
   if (state.trendMode === "search" && state.trendSearch.trim()) {
     return {
       type: "search",
@@ -365,6 +490,33 @@ function currentCreatorMatches() {
 }
 
 function creatorPoolForContext(context) {
+  if (context.type === "custom") {
+    const references = selectedReferenceCreators();
+    const lookalikeIds = references.flatMap(
+      (creator) => creator.lookalikeCreatorIds || [],
+    );
+    const customTopics = customTrendSignals().map((label) =>
+      label.toLowerCase(),
+    );
+    const lookalikes = fallbackCreatorResults.filter((creator) =>
+      lookalikeIds.includes(creator.id),
+    );
+    const topicMatches = fallbackCreatorResults.filter((creator) =>
+      (creator.matchTopics || []).some((topic) => {
+        const normalized = topic.toLowerCase();
+        return customTopics.some(
+          (signal) =>
+            normalized.includes(signal) || signal.includes(normalized),
+        );
+      }),
+    );
+    return prioritizeCreatorPool(
+      mergeCreators([...lookalikes, ...topicMatches]).length
+        ? mergeCreators([...lookalikes, ...topicMatches])
+        : fallbackCreatorResults,
+    );
+  }
+
   if (context.type === "genre") {
     const genrePool = creatorResultsByGenre[context.label];
     return prioritizeCreatorPool(
@@ -418,6 +570,9 @@ function renderCreatorEmptyState() {
 
 function currentTrendAudience() {
   const context = currentCreatorMatchContext();
+  if (activeCustomTrendBoard() && hasCustomTrendInputs()) {
+    return blendCustomAudience(audienceForSearchOrTopic(currentTrendLabel()));
+  }
   if (context.type === "genre")
     return trendAudienceByGenre[context.label] || fallbackTrendAudience;
   return audienceForSearchOrTopic(context.label);
@@ -463,8 +618,12 @@ export function currentTrendLabel() {
 
 export function currentTrendTopicContextKey() {
   const searched = state.trendSearch.trim().toLowerCase();
-  if (state.trendMode === "search" && searched) return `search:${searched}`;
-  return `genre:${state.selectedGenre.toLowerCase()}`;
+  const base =
+    state.trendMode === "search" && searched
+      ? `search:${searched}`
+      : `genre:${state.selectedGenre.toLowerCase()}`;
+  const activeBoard = activeCustomTrendBoard();
+  return activeBoard ? `custom:${activeBoard.id}:${base}` : base;
 }
 
 function currentEditableTrendTopics() {
@@ -490,18 +649,267 @@ function applyTopicCloudEdits(baseTopics, edits) {
 
 function currentTrendTopics() {
   const searched = state.trendSearch.trim();
-  if (state.trendMode === "search" && searched)
-    return relatedTopicsForSearch(searched);
-  return (
-    trendTopicCloudByGenre[state.selectedGenre] ||
-    trendTopicCloudByGenre[trendGenres[0]]
-  );
+  const base =
+    state.trendMode === "search" && searched
+      ? relatedTopicsForSearch(searched)
+      : trendTopicCloudByGenre[state.selectedGenre] ||
+        trendTopicCloudByGenre[trendGenres[0]];
+  if (!activeCustomTrendBoard()) return base;
+  return enrichCustomTrendTopics(base);
 }
 
 function currentTrendStats() {
   const searched = state.trendSearch.trim();
-  if (state.trendMode === "search" && searched) return statsForSearch(searched);
-  return (
-    trendStatsByGenre[state.selectedGenre] || trendStatsByGenre[trendGenres[0]]
+  const base =
+    state.trendMode === "search" && searched
+      ? statsForSearch(searched)
+      : trendStatsByGenre[state.selectedGenre] ||
+        trendStatsByGenre[trendGenres[0]];
+  if (!activeCustomTrendBoard() || !hasCustomTrendInputs()) return base;
+  return applyCustomStatInfluence(base);
+}
+
+function selectedReferenceCreators() {
+  const activeBoard = activeCustomTrendBoard();
+  const selected = new Set(activeBoard?.referenceCreatorIds || []);
+  return customTrendReferenceCreators.filter((creator) =>
+    selected.has(creator.id),
   );
+}
+
+function referenceCreatorSuggestions() {
+  const activeBoard = activeCustomTrendBoard();
+  const selected = new Set(activeBoard?.referenceCreatorIds || []);
+  const query = (activeBoard?.creatorSearch || "").trim().toLowerCase();
+  const available = customTrendReferenceCreators.filter(
+    (creator) => !selected.has(creator.id),
+  );
+  const matches = query
+    ? available.filter((creator) =>
+        [
+          creator.handle,
+          creator.name,
+          creator.platform,
+          creator.category,
+          creator.shortBio,
+          ...(creator.topics || []),
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(query),
+      )
+    : available;
+  return matches.slice(0, 4);
+}
+
+function enrichCustomTrendTopics(baseTopics) {
+  const seen = new Set();
+  const topics = [];
+  const pushTopic = (label, weight) => {
+    const key = label.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    topics.push({ label, weight });
+  };
+
+  baseTopics.forEach((topic) => pushTopic(topic.label, topic.weight));
+  const activeBoard = activeCustomTrendBoard();
+  (activeBoard?.keywords || []).forEach((label, index) =>
+    pushTopic(label, Math.max(50, 86 - index * 5)),
+  );
+  selectedReferenceCreators()
+    .flatMap((creator) => creator.topics || [])
+    .forEach((label, index) => pushTopic(label, Math.max(42, 78 - index * 4)));
+
+  return topics.slice(0, 18);
+}
+
+function applyCustomStatInfluence(baseStats) {
+  const references = selectedReferenceCreators();
+  const activeBoard = activeCustomTrendBoard();
+  const influence = references.reduce(
+    (total, creator) => ({
+      followers: total.followers + (creator.statInfluence.followers || 0),
+      views: total.views + (creator.statInfluence.views || 0),
+      engagement: total.engagement + (creator.statInfluence.engagement || 0),
+    }),
+    {
+      followers: (activeBoard?.keywords.length || 0) * 1.5,
+      views: 0,
+      engagement: 0,
+    },
+  );
+  const divisor = Math.max(1, references.length);
+  const keywordLift = (activeBoard?.keywords.length || 0) * 0.4;
+
+  return baseStats.map(([label, value, compare]) => {
+    const lower = label.toLowerCase();
+    if (lower.includes("follower")) {
+      return [
+        label,
+        shiftCompactValue(value, (influence.followers / divisor) * 0.01),
+        "custom set blend",
+      ];
+    }
+    if (lower.includes("view")) {
+      return [
+        label,
+        shiftCompactValue(
+          value,
+          (influence.views / divisor + keywordLift) * 0.01,
+        ),
+        "reference-weighted avg.",
+      ];
+    }
+    if (lower.includes("rate")) {
+      return [
+        label,
+        shiftPercentValue(
+          value,
+          influence.engagement / divisor + keywordLift / 10,
+        ),
+        "custom context",
+      ];
+    }
+    if (lower.includes("engagement") || lower.includes("likes")) {
+      return [
+        label,
+        shiftCompactValue(
+          value,
+          (influence.engagement / divisor + keywordLift) * 0.04,
+        ),
+        "custom context",
+      ];
+    }
+    return [label, value, compare];
+  });
+}
+
+function blendCustomAudience(baseAudience) {
+  const references = selectedReferenceCreators();
+  if (!references.length)
+    return audienceForSearchOrTopic(
+      customTrendSignals()[0] || currentTrendLabel(),
+    );
+
+  const audiences = [
+    baseAudience,
+    ...references.map((creator) => creator.audienceSkew),
+  ];
+  return {
+    locations: blendLocations(audiences.map((audience) => audience.locations)),
+    genderSplit: blendGenderSplit(
+      audiences.map((audience) => audience.genderSplit),
+    ),
+    genderByAge: blendGenderByAge(
+      audiences.map((audience) => audience.genderByAge),
+    ),
+  };
+}
+
+function blendLocations(locationSets) {
+  const totals = new Map();
+  locationSets.forEach((locations) => {
+    locations.forEach(([country, value]) => {
+      totals.set(
+        country,
+        (totals.get(country) || 0) + value / locationSets.length,
+      );
+    });
+  });
+  return [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+}
+
+function blendGenderSplit(splits) {
+  return ["Female", "Male", "Other"].reduce((result, key) => {
+    result[key] = Number(
+      (
+        splits.reduce((sum, split) => sum + (Number(split[key]) || 0), 0) /
+        splits.length
+      ).toFixed(1),
+    );
+    return result;
+  }, {});
+}
+
+function blendGenderByAge(groups) {
+  const first = groups[0] || [];
+  return first.map((row, index) => ({
+    group: row.group,
+    female: Number(
+      (
+        groups.reduce(
+          (sum, group) => sum + (Number(group[index]?.female) || 0),
+          0,
+        ) / groups.length
+      ).toFixed(1),
+    ),
+    male: Number(
+      (
+        groups.reduce(
+          (sum, group) => sum + (Number(group[index]?.male) || 0),
+          0,
+        ) / groups.length
+      ).toFixed(1),
+    ),
+  }));
+}
+
+function customTrendSignals() {
+  const activeBoard = activeCustomTrendBoard();
+  return [
+    ...(activeBoard?.keywords || []),
+    ...selectedReferenceCreators().flatMap((creator) => creator.topics || []),
+  ];
+}
+
+function hasCustomTrendInputs() {
+  const activeBoard = activeCustomTrendBoard();
+  return Boolean(
+    activeBoard &&
+    (activeBoard.keywords.length || activeBoard.referenceCreatorIds.length),
+  );
+}
+
+function activeCustomTrendBoard() {
+  return state.customTrendBoards.find(
+    (board) => board.id === state.activeTrendBoardId,
+  );
+}
+
+function mergeCreators(creators) {
+  const seen = new Set();
+  return creators.filter((creator) => {
+    if (seen.has(creator.id)) return false;
+    seen.add(creator.id);
+    return true;
+  });
+}
+
+function platformLabel(platform) {
+  const option = creatorResultPlatformOptions.find(
+    (item) => item.id === platform,
+  );
+  return option ? option.label : platform;
+}
+
+function shiftCompactValue(value, ratio) {
+  const number = compactValueToNumber(value);
+  if (!Number.isFinite(number)) return value;
+  return formatCompactNumber(number * (1 + ratio));
+}
+
+function shiftPercentValue(value, lift) {
+  const number = Number(String(value).replace("%", ""));
+  if (!Number.isFinite(number)) return value;
+  return `${Math.max(0, number + lift).toFixed(1)}%`;
+}
+
+function compactValueToNumber(value) {
+  const normalized = String(value).replace(",", "").trim();
+  const number = parseFloat(normalized);
+  if (!Number.isFinite(number)) return NaN;
+  if (normalized.endsWith("M")) return number * 1000000;
+  if (normalized.endsWith("K")) return number * 1000;
+  return number;
 }
