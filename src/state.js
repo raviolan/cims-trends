@@ -1,0 +1,17 @@
+const state = {
+  globalView: "creator-profile",
+  view: "statistics",
+  collaborations: "ongoing",
+  audienceMetric: "followers",
+  contentSort: "impressions",
+  contentScope: "all",
+  trendMode: "genre",
+  selectedGenre: "Fashion & beauty",
+  trendSearch: "",
+  activeTopic: { scope: "creator", label: "" },
+  creatorResultSearch: "",
+  creatorResultPlatforms: ["instagram", "tiktok", "youtube"],
+  creatorResultFilters: [],
+  creatorResultSort: "engagements",
+  topicCloudEdits: {},
+};

@@ -1,0 +1,108 @@
+@media (max-width: 1520px) {
+  .media-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .chart-grid,
+  .trend-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+  }
+
+  .trend-control-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topic-cloud-card.editable .card-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .trend-audience-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trend-audience-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .creator-search-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .creator-result-row {
+    grid-template-columns: 34px 34px 48px minmax(260px, 1fr);
+  }
+
+  .creator-result-metrics,
+  .creator-result-actions {
+    grid-column: 4 / -1;
+  }
+
+  .creator-result-metrics {
+    grid-template-columns: repeat(5, minmax(72px, 1fr));
+  }
+
+  .channel-row {
+    grid-template-columns: minmax(220px, 1.2fr) repeat(4, minmax(100px, 0.8fr)) minmax(170px, 0.9fr) 56px;
+  }
+
+  .channel-stat:nth-of-type(n + 6) {
+    display: none;
+  }
+}
+
+@media (max-width: 1280px) {
+  body {
+    overflow: auto;
+  }
+
+  .app-shell {
+    grid-template-columns: 78px 136px minmax(780px, 1fr);
+    min-width: 1040px;
+  }
+
+  .chart-grid,
+  .mini-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+
+  .campaign-grid,
+  .overview-campaigns,
+  .overview-hero,
+  .trend-audience-grid,
+  .trend-control-grid,
+  .trend-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trend-audience-card:last-child {
+    grid-column: auto;
+  }
+
+  .creator-result-row {
+    grid-template-columns: 32px 32px 44px minmax(0, 1fr);
+  }
+
+  .creator-result-identity,
+  .creator-result-metrics,
+  .creator-result-actions {
+    grid-column: 4;
+  }
+
+  .creator-result-metrics {
+    grid-template-columns: repeat(3, minmax(78px, 1fr));
+  }
+
+  .topic-cloud-editor,
+  .topic-cloud-input {
+    width: 100%;
+  }
+}

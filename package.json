@@ -1,0 +1,8 @@
+{
+  "name": "cims-dash-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js"
+  }
+}
