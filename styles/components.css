@@ -256,7 +256,12 @@
   width: 112px;
   height: 112px;
   border-radius: 50%;
-  background: conic-gradient(var(--c1) 0 46%, var(--c2) 46% 71%, var(--c3) 71% 88%, var(--c4) 88% 100%);
+  background: conic-gradient(
+    var(--c1) 0 46%,
+    var(--c2) 46% 71%,
+    var(--c3) 71% 88%,
+    var(--c4) 88% 100%
+  );
   position: relative;
   flex: 0 0 auto;
 }

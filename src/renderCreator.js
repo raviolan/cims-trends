@@ -1,4 +1,36 @@
-function renderStatistics() {
+import {
+  brandAffinity,
+  campaigns,
+  contentItems,
+  creatorTopicCloud,
+  hashtags,
+  interestAffinity,
+  mentions,
+  rankedCity,
+  rankedCountry,
+  rankedLanguage,
+  statCards,
+  trendCards,
+} from "./data/creatorProfile.js";
+import { parseK, segmentedButton } from "./helpers.js";
+import {
+  renderAffinityCard,
+  renderAgeBarsCard,
+  renderCampaignCard,
+  renderCommonTopicCloud,
+  renderDonutCard,
+  renderEngagementCurveCard,
+  renderFeeCard,
+  renderRankCard,
+  renderLookalikeCard,
+  renderStatCard,
+  renderTagCard,
+  renderTrendCard,
+  renderTrendSnapshotCard,
+} from "./renderShared.js";
+import { state } from "./state.js";
+
+export function renderStatistics() {
   return `
     <section class="metrics-section">
       <div class="metrics-grid">
@@ -61,7 +93,14 @@ function renderStatistics() {
     <section>
       <div class="chart-grid">
         ${renderAffinityCard("Audience brand affinity", brandAffinity)}
-        ${renderRankCard("Audience interest", interestAffinity.map(([name, value]) => [name, value, parseFloat(value)]))}
+        ${renderRankCard(
+          "Audience interest",
+          interestAffinity.map(([name, value]) => [
+            name,
+            value,
+            parseFloat(value),
+          ]),
+        )}
         ${renderLookalikeCard()}
         ${renderTrendSnapshotCard()}
       </div>
@@ -97,7 +136,7 @@ function renderStatistics() {
   `;
 }
 
-function renderOverview() {
+export function renderOverview() {
   return `
     <section class="overview-hero">
       <div class="overview-card">
@@ -160,7 +199,7 @@ function renderOverview() {
   `;
 }
 
-function renderContent() {
+export function renderContent() {
   const items = filterContentItems();
   return `
     <section class="content-top">

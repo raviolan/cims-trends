@@ -1,4 +1,4 @@
-const state = {
+export const state = {
   globalView: "trend-exploration",
   view: "statistics",
   collaborations: "ongoing",
@@ -13,5 +13,7 @@ const state = {
   creatorResultPlatforms: ["instagram", "tiktok", "youtube"],
   creatorResultFilters: [],
   creatorResultSort: "engagements",
+  savedCreatorIds: ["cr-002", "cr-007"],
+  addedCreatorIds: [],
   topicCloudEdits: {},
 };

@@ -1,138 +1,119 @@
-function bindEvents() {
-  document.querySelectorAll("[data-global-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.globalView = button.dataset.globalView;
-      render();
-    });
-  });
+import {
+  addTrendTopic,
+  applyCreatorSuggestion,
+  clearCreatorResultControls,
+  removeCreatorResultFilter,
+  removeTrendTopic,
+  setActiveTopic,
+  setCreatorResultSearch,
+  setCreatorResultSort,
+  setCreatorView,
+  setGlobalView,
+  setSegmentValue,
+  setTrendGenre,
+  setTrendSearch,
+  toggleAddedCreator,
+  toggleCreatorResultFilter,
+  toggleCreatorResultPlatform,
+  toggleSavedCreator,
+} from "./actions.js";
+import { currentTrendTopicContextKey } from "./renderTrendExploration.js";
 
-  document.querySelectorAll("[data-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.view = button.dataset.view;
-      render();
-    });
-  });
+let rerender = () => {};
 
-  document.querySelectorAll("[data-segment]").forEach((segment) => {
-    segment.querySelectorAll("[data-value]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const target = segment.dataset.segment;
-        state[target] = button.dataset.value;
-        render();
-      });
-    });
-  });
+export function bindEvents(appRoot, render) {
+  rerender = render;
+  appRoot.addEventListener("click", handleClick);
+  appRoot.addEventListener("submit", handleSubmit);
+}
 
-  document.querySelectorAll("[data-topic]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.activeTopic = {
-        scope: button.dataset.topicScope || "default",
-        label: button.dataset.topic,
-      };
-      render();
-    });
-  });
+function handleClick(event) {
+  const target = event.target.closest("button");
+  if (!target) return;
 
-  document.querySelectorAll("[data-genre]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.trendMode = "genre";
-      state.selectedGenre = button.dataset.genre;
-      state.activeTopic = { scope: "trend", label: "" };
-      render();
-    });
-  });
+  if (target.dataset.globalView)
+    return update(() => setGlobalView(target.dataset.globalView));
+  if (target.dataset.view)
+    return update(() => setCreatorView(target.dataset.view));
+  if (target.dataset.genre)
+    return update(() => setTrendGenre(target.dataset.genre));
+  if (target.dataset.topic)
+    return update(() =>
+      setActiveTopic(
+        target.dataset.topicScope || "default",
+        target.dataset.topic,
+      ),
+    );
+  if (target.dataset.removeTopic) {
+    event.stopPropagation();
+    return update(() =>
+      removeTrendTopic(
+        target.dataset.topicContext || currentTrendTopicContextKey(),
+        target.dataset.removeTopic,
+      ),
+    );
+  }
+  if (target.dataset.creatorPlatform)
+    return update(() =>
+      toggleCreatorResultPlatform(target.dataset.creatorPlatform),
+    );
+  if (target.dataset.creatorFilter)
+    return update(() =>
+      toggleCreatorResultFilter(target.dataset.creatorFilter),
+    );
+  if (target.dataset.creatorFilterRemove)
+    return update(() =>
+      removeCreatorResultFilter(target.dataset.creatorFilterRemove),
+    );
+  if (target.dataset.creatorResultsClear !== undefined)
+    return update(clearCreatorResultControls);
+  if (target.dataset.creatorSuggestion)
+    return update(() =>
+      applyCreatorSuggestion(target.dataset.creatorSuggestion),
+    );
+  if (target.dataset.creatorSave)
+    return update(() => toggleSavedCreator(target.dataset.creatorSave));
+  if (target.dataset.creatorAdd)
+    return update(() => toggleAddedCreator(target.dataset.creatorAdd));
 
-  document.querySelectorAll("[data-trend-search]").forEach((form) => {
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const formData = new FormData(form);
-      state.trendSearch = String(formData.get("trendSearch") || "").trim();
-      state.trendMode = state.trendSearch ? "search" : "genre";
-      state.activeTopic = { scope: "trend", label: "" };
-      render();
+  const segmentItem = target.closest("[data-segment] [data-value]");
+  if (segmentItem) {
+    const segment = segmentItem.closest("[data-segment]");
+    const key = segment.dataset.segment;
+    const value = segmentItem.dataset.value;
+    return update(() => {
+      if (key === "creatorResultSort") setCreatorResultSort(value);
+      else setSegmentValue(key, value);
     });
-  });
+  }
+}
 
-  document.querySelectorAll("[data-topic-add-form]").forEach((form) => {
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const formData = new FormData(form);
-      addTrendTopicWord(formData.get("topicCloudWord") || "");
-      render();
-    });
-  });
+function handleSubmit(event) {
+  const form = event.target;
+  if (form.matches("[data-trend-search]")) {
+    event.preventDefault();
+    return update(() => setTrendSearch(new FormData(form).get("trendSearch")));
+  }
 
-  document.querySelectorAll("[data-remove-topic]").forEach((button) => {
-    button.addEventListener("click", () => {
-      removeTrendTopicWord(button.dataset.removeTopic || "");
-      render();
-    });
-  });
+  if (form.matches("[data-topic-add-form]")) {
+    event.preventDefault();
+    return update(() =>
+      addTrendTopic(
+        form.dataset.topicContext || currentTrendTopicContextKey(),
+        new FormData(form).get("topicCloudWord"),
+      ),
+    );
+  }
 
-  document.querySelectorAll("[data-creator-result-search]").forEach((form) => {
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const formData = new FormData(form);
-      state.creatorResultSearch = String(formData.get("creatorResultSearch") || "").trim();
-      render();
-    });
-  });
+  if (form.matches("[data-creator-result-search]")) {
+    event.preventDefault();
+    return update(() =>
+      setCreatorResultSearch(new FormData(form).get("creatorResultSearch")),
+    );
+  }
+}
 
-  document.querySelectorAll("[data-creator-platform]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const platform = button.dataset.creatorPlatform;
-      state.creatorResultPlatforms = state.creatorResultPlatforms.includes(platform)
-        ? state.creatorResultPlatforms.filter((item) => item !== platform)
-        : [...state.creatorResultPlatforms, platform];
-      render();
-    });
-  });
-
-  document.querySelectorAll("[data-creator-filter]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const filter = button.dataset.creatorFilter;
-      state.creatorResultFilters = state.creatorResultFilters.includes(filter)
-        ? state.creatorResultFilters.filter((item) => item !== filter)
-        : [...state.creatorResultFilters, filter];
-      render();
-    });
-  });
-
-  document.querySelectorAll("[data-creator-filter-remove]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.creatorResultFilters = state.creatorResultFilters.filter((item) => item !== button.dataset.creatorFilterRemove);
-      render();
-    });
-  });
-
-  document.querySelectorAll("[data-creator-results-clear]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.creatorResultSearch = "";
-      state.creatorResultFilters = [];
-      state.creatorResultPlatforms = creatorResultPlatformOptions.map((platform) => platform.id);
-      state.creatorResultSort = "engagements";
-      render();
-    });
-  });
-
-  document.querySelectorAll("[data-creator-suggestion]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.creatorResultSearch = button.dataset.creatorSuggestion;
-      render();
-    });
-  });
-
-  document.querySelectorAll("[data-creator-save]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const profile = fallbackCreatorResults.find((creator) => creator.id === button.dataset.creatorSave);
-      if (profile) profile.saved = !profile.saved;
-      render();
-    });
-  });
-
-  document.querySelectorAll("[data-creator-add]").forEach((button) => {
-    button.addEventListener("click", () => {
-      button.dataset.added = "true";
-    });
-  });
+function update(action) {
+  action();
+  rerender();
 }

@@ -1,4 +1,33 @@
-function renderTrendExploration() {
+import { topicCloudEditForKey } from "./actions.js";
+import {
+  creatorResultFilters,
+  creatorResultPlatformOptions,
+  creatorResultsByGenre,
+  fallbackCreatorResults,
+} from "./data/creatorResults.js";
+import {
+  fallbackTrendAudience,
+  relatedTopicsForSearch,
+  statsForSearch,
+  trendAudienceByGenre,
+  trendGenres,
+  trendStatsByGenre,
+  trendTopicCloudByGenre,
+} from "./data/trendExploration.js";
+import {
+  escapeAttribute,
+  escapeHtml,
+  formatPercent,
+  segmentedButton,
+} from "./helpers.js";
+import {
+  renderCommonTopicCloud,
+  renderCreatorResultRow,
+  renderStatCard,
+} from "./renderShared.js";
+import { state } from "./state.js";
+
+export function renderTrendExploration() {
   const topicContextKey = currentTrendTopicContextKey();
   const topics = currentEditableTrendTopics();
   const stats = currentTrendStats();
@@ -8,7 +37,7 @@ function renderTrendExploration() {
         <div class="card-toolbar">
           <div>
             <h2 class="card-title">Explore trend signals</h2>
-            <div class="card-note">Select a genre or search a keyword to update mock topics and averages</div>
+            <div class="card-note">Select a genre or search a keyword to update topics and averages</div>
           </div>
         </div>
         <div class="trend-control-grid">
@@ -19,9 +48,9 @@ function renderTrendExploration() {
                 .map(
                   (genre) => `
                     <button class="genre-button ${state.trendMode === "genre" && state.selectedGenre === genre ? "active" : ""}" type="button" data-genre="${escapeAttribute(
-                    genre
-                  )}">${escapeHtml(genre)}</button>
-                  `
+                      genre,
+                    )}">${escapeHtml(genre)}</button>
+                  `,
                 )
                 .join("")}
             </div>
@@ -30,7 +59,7 @@ function renderTrendExploration() {
             <label class="control-label" for="trend-search-input">Keyword search</label>
             <div class="search-row">
               <input id="trend-search-input" name="trendSearch" type="search" placeholder="Search e.g. denim, AI tools, meal prep" value="${escapeAttribute(
-                state.trendSearch
+                state.trendSearch,
               )}" />
               <button class="primary-button" type="submit">Search</button>
             </div>
@@ -45,7 +74,10 @@ function renderTrendExploration() {
         contextKey: topicContextKey,
         editable: true,
         removable: true,
-        note: state.trendMode === "search" ? "Mock related terms from keyword exploration" : "Top mock keywords for the selected genre",
+        note:
+          state.trendMode === "search"
+            ? "Related terms from keyword exploration"
+            : "Top keywords for the selected genre",
       })}
     </section>
 
@@ -53,7 +85,7 @@ function renderTrendExploration() {
       <div class="section-head">
         <div>
           <h2 class="section-title">Trend statistics</h2>
-          <div class="subtle-label">Average performance across mock scraped/search-related content</div>
+          <div class="subtle-label">Average performance across search-related content</div>
         </div>
       </div>
       <div class="metrics-grid">
@@ -74,7 +106,7 @@ function renderTrendAudienceSection() {
       <div class="section-head">
         <div>
           <h2 class="section-title">Audience behind this trend</h2>
-          <div class="subtle-label">Mock interaction geography and audience composition for ${escapeHtml(currentCreatorMatchContext().label)}</div>
+          <div class="subtle-label">Interaction geography and audience composition for ${escapeHtml(currentCreatorMatchContext().label)}</div>
         </div>
       </div>
       <div class="trend-audience-grid">
@@ -109,7 +141,7 @@ function renderTrendLocationCard(locations) {
                   <div class="trend-location-bar" style="width:${Math.round((value / max) * 100)}%"></div>
                 </div>
               </div>
-            `
+            `,
           )
           .join("")}
       </div>
@@ -142,7 +174,7 @@ function renderTrendGenderSplitCard(genderSplit) {
                   <span><i></i>${escapeHtml(label)}</span>
                   <strong>${formatPercent(value)}</strong>
                 </div>
-              `
+              `,
             )
             .join("")}
         </div>
@@ -172,7 +204,7 @@ function renderTrendGenderByAgeCard(rows) {
                 </div>
                 <div class="trend-age-label">${escapeHtml(row.group)}</div>
               </div>
-            `
+            `,
           )
           .join("")}
       </div>
@@ -188,7 +220,7 @@ function renderCreatorMatchesSection() {
       <div class="section-head">
         <div>
           <h2 class="section-title">Creator matches</h2>
-          <div class="subtle-label">Mock creators aligned with the current trend context</div>
+          <div class="subtle-label">Creators aligned with the current trend context</div>
         </div>
         <div class="segmented" data-segment="creatorResultSort">
           ${segmentedButton("followers", "Followers", state.creatorResultSort)}
@@ -221,11 +253,11 @@ function renderCreatorMatchesSection() {
                 .map(
                   (platform) => `
                     <button class="creator-platform-button ${state.creatorResultPlatforms.includes(platform.id) ? "active" : ""}" type="button" data-creator-platform="${escapeAttribute(
-                    platform.id
-                  )}">
+                      platform.id,
+                    )}">
                       <span>${escapeHtml(platform.icon)}</span>${escapeHtml(platform.label)}
                     </button>
-                  `
+                  `,
                 )
                 .join("")}
             </div>
@@ -243,25 +275,27 @@ function renderCreatorMatchesSection() {
             .map(
               (filter) => `
                 <button class="creator-filter-button ${state.creatorResultFilters.includes(filter) ? "active" : ""}" type="button" data-creator-filter="${escapeAttribute(
-                filter
-              )}">${escapeHtml(filter)}</button>
-              `
+                  filter,
+                )}">${escapeHtml(filter)}</button>
+              `,
             )
             .join("")}
         </div>
 
         <div class="creator-active-filters">
-          ${state.creatorResultFilters.length
-            ? state.creatorResultFilters
-                .map(
-                  (filter) => `
+          ${
+            state.creatorResultFilters.length
+              ? state.creatorResultFilters
+                  .map(
+                    (filter) => `
                     <button class="active-filter-chip" type="button" data-creator-filter-remove="${escapeAttribute(filter)}">
                       ${escapeHtml(filter)} <span>x</span>
                     </button>
-                  `
-                )
-                .join("")
-            : `<span class="filter-empty">No active filters</span>`}
+                  `,
+                  )
+                  .join("")
+              : `<span class="filter-empty">No active filters</span>`
+          }
         </div>
       </div>
 
@@ -274,11 +308,19 @@ function renderCreatorMatchesSection() {
 
 function currentCreatorMatchContext() {
   if (state.activeTopic.scope === "trend" && state.activeTopic.label) {
-    return { type: "topic", label: state.activeTopic.label, suggestion: state.activeTopic.label.replace(/\s+trend$/i, "") };
+    return {
+      type: "topic",
+      label: state.activeTopic.label,
+      suggestion: state.activeTopic.label.replace(/\s+trend$/i, ""),
+    };
   }
 
   if (state.trendMode === "search" && state.trendSearch.trim()) {
-    return { type: "search", label: state.trendSearch.trim(), suggestion: `${state.trendSearch.trim()} creators` };
+    return {
+      type: "search",
+      label: state.trendSearch.trim(),
+      suggestion: `${state.trendSearch.trim()} creators`,
+    };
   }
 
   return { type: "genre", label: state.selectedGenre, suggestion: "" };
@@ -293,35 +335,62 @@ function currentCreatorMatches() {
     .filter((creator) => platformSet.has(creator.platform))
     .filter((creator) => {
       if (!localSearch) return true;
-      const haystack = [creator.handle, creator.name, creator.bio, creator.gender, creator.contact, creator.lookalike, ...(creator.matchTopics || [])]
+      const haystack = [
+        creator.handle,
+        creator.name,
+        creator.bio,
+        creator.gender,
+        creator.contact,
+        creator.lookalike,
+        ...(creator.matchTopics || []),
+      ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(localSearch);
     });
 
-  const sorted = [...filtered].sort((a, b) => creatorSortValue(b, state.creatorResultSort) - creatorSortValue(a, state.creatorResultSort));
+  const sorted = [...filtered].sort(
+    (a, b) =>
+      creatorSortValue(b, state.creatorResultSort) -
+      creatorSortValue(a, state.creatorResultSort),
+  );
   const fallback = fallbackCreatorResults
     .filter((creator) => platformSet.has(creator.platform))
-    .sort((a, b) => creatorSortValue(b, state.creatorResultSort) - creatorSortValue(a, state.creatorResultSort));
+    .sort(
+      (a, b) =>
+        creatorSortValue(b, state.creatorResultSort) -
+        creatorSortValue(a, state.creatorResultSort),
+    );
   return (sorted.length ? sorted : fallback).slice(0, 10);
 }
 
 function creatorPoolForContext(context) {
   if (context.type === "genre") {
     const genrePool = creatorResultsByGenre[context.label];
-    return prioritizeCreatorPool(genrePool && genrePool.length ? genrePool : fallbackCreatorResults);
+    return prioritizeCreatorPool(
+      genrePool && genrePool.length ? genrePool : fallbackCreatorResults,
+    );
   }
 
   const needle = context.label.toLowerCase();
   const topicMatches = fallbackCreatorResults.filter((creator) =>
-    creator.matchTopics.some((topic) => topic.toLowerCase().includes(needle) || needle.includes(topic.toLowerCase()))
+    creator.matchTopics.some(
+      (topic) =>
+        topic.toLowerCase().includes(needle) ||
+        needle.includes(topic.toLowerCase()),
+    ),
   );
-  return prioritizeCreatorPool(topicMatches.length ? topicMatches : fallbackCreatorResults);
+  return prioritizeCreatorPool(
+    topicMatches.length ? topicMatches : fallbackCreatorResults,
+  );
 }
 
 function prioritizeCreatorPool(primary) {
   const seen = new Set(primary.map((creator) => creator.id));
-  return [...primary, ...fallbackCreatorResults.filter((creator) => !seen.has(creator.id))];
+  return [
+    ...primary,
+    ...fallbackCreatorResults.filter((creator) => !seen.has(creator.id)),
+  ];
 }
 
 function creatorSortValue(profile, sortKey) {
@@ -331,13 +400,17 @@ function creatorSortValue(profile, sortKey) {
 }
 
 function shouldShowDidYouMean(context) {
-  return context.type !== "genre" && context.suggestion && context.suggestion !== context.label;
+  return (
+    context.type !== "genre" &&
+    context.suggestion &&
+    context.suggestion !== context.label
+  );
 }
 
 function renderCreatorEmptyState() {
   return `
     <div class="creator-result-empty chart-card">
-      <strong>No exact mock matches</strong>
+      <strong>No exact matches</strong>
       <span>Try another platform or clear the local creator-result search.</span>
     </div>
   `;
@@ -345,54 +418,69 @@ function renderCreatorEmptyState() {
 
 function currentTrendAudience() {
   const context = currentCreatorMatchContext();
-  if (context.type === "genre") return trendAudienceByGenre[context.label] || fallbackTrendAudience;
+  if (context.type === "genre")
+    return trendAudienceByGenre[context.label] || fallbackTrendAudience;
   return audienceForSearchOrTopic(context.label);
 }
 
 function audienceForSearchOrTopic(label) {
   const normalized = label.toLowerCase();
-  const genre = trendGenres.find((item) => normalized.includes(item.toLowerCase()));
+  const genre = trendGenres.find((item) =>
+    normalized.includes(item.toLowerCase()),
+  );
   if (genre) return trendAudienceByGenre[genre] || fallbackTrendAudience;
 
   const topicGenre = trendGenres.find((item) =>
-    (trendTopicCloudByGenre[item] || []).some((topic) => normalized.includes(topic.label.toLowerCase()) || topic.label.toLowerCase().includes(normalized))
+    (trendTopicCloudByGenre[item] || []).some(
+      (topic) =>
+        normalized.includes(topic.label.toLowerCase()) ||
+        topic.label.toLowerCase().includes(normalized),
+    ),
   );
 
-  const base = topicGenre ? trendAudienceByGenre[topicGenre] : fallbackTrendAudience;
+  const base = topicGenre
+    ? trendAudienceByGenre[topicGenre]
+    : fallbackTrendAudience;
   const shift = Math.min(4, normalized.length % 5);
   return {
-    locations: base.locations.map(([country, value], index) => [country, Math.max(2, Number((value + (index === 0 ? shift : -shift / 2)).toFixed(1)))]),
+    locations: base.locations.map(([country, value], index) => [
+      country,
+      Math.max(
+        2,
+        Number((value + (index === 0 ? shift : -shift / 2)).toFixed(1)),
+      ),
+    ]),
     genderSplit: base.genderSplit,
     genderByAge: base.genderByAge,
   };
 }
 
-function currentTrendLabel() {
+export function currentTrendLabel() {
   const searched = state.trendSearch.trim();
   if (state.trendMode === "search" && searched) return searched;
   return state.selectedGenre;
 }
 
-function currentTrendTopicContextKey() {
+export function currentTrendTopicContextKey() {
   const searched = state.trendSearch.trim().toLowerCase();
   if (state.trendMode === "search" && searched) return `search:${searched}`;
   return `genre:${state.selectedGenre.toLowerCase()}`;
 }
 
 function currentEditableTrendTopics() {
-  return applyTopicCloudEdits(currentTrendTopics(), topicCloudEditForKey(currentTrendTopicContextKey()));
-}
-
-function topicCloudEditForKey(key) {
-  if (!state.topicCloudEdits[key]) {
-    state.topicCloudEdits[key] = { added: [], removed: [] };
-  }
-  return state.topicCloudEdits[key];
+  return applyTopicCloudEdits(
+    currentTrendTopics(),
+    topicCloudEditForKey(currentTrendTopicContextKey()),
+  );
 }
 
 function applyTopicCloudEdits(baseTopics, edits) {
-  const removed = new Set((edits.removed || []).map((label) => label.toLowerCase()));
-  const visible = baseTopics.filter((topic) => !removed.has(topic.label.toLowerCase()));
+  const removed = new Set(
+    (edits.removed || []).map((label) => label.toLowerCase()),
+  );
+  const visible = baseTopics.filter(
+    (topic) => !removed.has(topic.label.toLowerCase()),
+  );
   const existing = new Set(visible.map((topic) => topic.label.toLowerCase()));
   const added = (edits.added || [])
     .filter((label) => !existing.has(label.toLowerCase()))
@@ -400,78 +488,20 @@ function applyTopicCloudEdits(baseTopics, edits) {
   return [...visible, ...added].slice(0, 14);
 }
 
-function addTrendTopicWord(rawLabel) {
-  const label = normalizeTopicLabel(rawLabel);
-  if (!label) return;
-
-  const key = currentTrendTopicContextKey();
-  const edit = topicCloudEditForKey(key);
-  const lower = label.toLowerCase();
-  const baseMatch = currentTrendTopics().find((topic) => topic.label.toLowerCase() === lower);
-
-  edit.removed = edit.removed.filter((item) => item.toLowerCase() !== lower);
-  if (!baseMatch && !edit.added.some((item) => item.toLowerCase() === lower)) {
-    edit.added = [...edit.added, label].slice(-6);
-  }
-}
-
-function removeTrendTopicWord(rawLabel) {
-  const label = normalizeTopicLabel(rawLabel);
-  if (!label) return;
-
-  const key = currentTrendTopicContextKey();
-  const edit = topicCloudEditForKey(key);
-  const lower = label.toLowerCase();
-  const baseMatch = currentTrendTopics().some((topic) => topic.label.toLowerCase() === lower);
-
-  edit.added = edit.added.filter((item) => item.toLowerCase() !== lower);
-  if (baseMatch && !edit.removed.some((item) => item.toLowerCase() === lower)) {
-    edit.removed = [...edit.removed, label];
-  }
-
-  if (state.activeTopic.scope === "trend" && state.activeTopic.label.toLowerCase() === lower) {
-    state.activeTopic = { scope: "trend", label: "" };
-  }
-}
-
 function currentTrendTopics() {
   const searched = state.trendSearch.trim();
-  if (state.trendMode === "search" && searched) return relatedTopicsForSearch(searched);
-  return trendTopicCloudByGenre[state.selectedGenre] || trendTopicCloudByGenre[trendGenres[0]];
+  if (state.trendMode === "search" && searched)
+    return relatedTopicsForSearch(searched);
+  return (
+    trendTopicCloudByGenre[state.selectedGenre] ||
+    trendTopicCloudByGenre[trendGenres[0]]
+  );
 }
 
 function currentTrendStats() {
   const searched = state.trendSearch.trim();
   if (state.trendMode === "search" && searched) return statsForSearch(searched);
-  return trendStatsByGenre[state.selectedGenre] || trendStatsByGenre[trendGenres[0]];
-}
-
-function relatedTopicsForSearch(keyword) {
-  const clean = keyword.toLowerCase().replace(/\s+/g, " ").trim();
-  const seeds = ["trend", "routine", "review", "tips", "haul", "guide", "setup", "before after", "mistakes", "favorites"];
-  return seeds.map((seed, index) => ({
-    label: index % 3 === 0 ? `${clean} ${seed}` : `${seed} ${clean}`,
-    weight: 96 - index * 7,
-  }));
-}
-
-function statsForSearch(keyword) {
-  const size = Math.max(1, keyword.trim().length);
-  const modifier = Math.min(9, size);
-  return [
-    ["Followers", `${Math.round(82 + modifier * 9)}K`, "+2.9% sample"],
-    ["Avg. Views", `${Math.round(28 + modifier * 4)}K`, "keyword avg."],
-    ["View rate", `${(22 + modifier * 1.2).toFixed(1)}%`, "per post avg."],
-    ["Avg. R. views", `${Math.round(46 + modifier * 5)}K`, "+7.8% trend"],
-    ["R. view rate", `${(38 + modifier * 1.8).toFixed(1)}%`, "reels sample"],
-    ["Avg. S. views", `${Math.round(11 + modifier * 2)}K`, "story avg."],
-    ["S. view rate", `${(9.5 + modifier * 0.8).toFixed(1)}%`, "story sample"],
-    ["Engagements", `${(4.8 + modifier * 0.55).toFixed(1)}K`, "+5.6% trend"],
-    ["Engagement rate", `${(4.1 + modifier * 0.24).toFixed(1)}%`, "content avg."],
-    ["Viewers eng. rate", `${(7.4 + modifier * 0.38).toFixed(1)}%`, "viewer avg."],
-    ["Avg. likes", `${(3.7 + modifier * 0.48).toFixed(1)}K`, "+4.4% trend"],
-    ["Avg. comm.", `${Math.round(78 + modifier * 12)}`, "per post"],
-    ["Avg. shares", `${Math.round(180 + modifier * 28)}`, "+8.9% trend"],
-    ["Avg. saves", `${Math.round(290 + modifier * 31)}`, "+7.1% trend"],
-  ];
+  return (
+    trendStatsByGenre[state.selectedGenre] || trendStatsByGenre[trendGenres[0]]
+  );
 }

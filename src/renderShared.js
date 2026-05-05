@@ -1,4 +1,17 @@
-function renderStatCard(label, value, compare, index) {
+import { lookalikes } from "./data/creatorProfile.js";
+import { creatorResultPlatformOptions } from "./data/creatorResults.js";
+import {
+  escapeAttribute,
+  escapeHtml,
+  formatCompactNumber,
+  formatPercent,
+  metricIconFor,
+  sparkLine,
+  topicScale,
+} from "./helpers.js";
+import { state } from "./state.js";
+
+export function renderStatCard(label, value, compare, index) {
   return `
     <article class="stat-card">
       <div class="stat-head">
@@ -11,7 +24,7 @@ function renderStatCard(label, value, compare, index) {
   `;
 }
 
-function renderCreatorMetricBox(label, value) {
+export function renderCreatorMetricBox(label, value) {
   return `
     <div class="creator-metric-box">
       <span>${escapeHtml(label)}</span>
@@ -20,8 +33,12 @@ function renderCreatorMetricBox(label, value) {
   `;
 }
 
-function renderCreatorResultRow(profile, index) {
-  const platform = creatorResultPlatformOptions.find((item) => item.id === profile.platform);
+export function renderCreatorResultRow(profile, index) {
+  const platform = creatorResultPlatformOptions.find(
+    (item) => item.id === profile.platform,
+  );
+  const isSaved = state.savedCreatorIds.includes(profile.id);
+  const isAdded = state.addedCreatorIds.includes(profile.id);
   return `
     <article class="creator-result-row">
       <div class="creator-result-rank">${index + 1}</div>
@@ -49,16 +66,16 @@ function renderCreatorResultRow(profile, index) {
         ${renderCreatorMetricBox("Growth", formatPercent(profile.followersGrowth))}
       </div>
       <div class="creator-result-actions">
-        <button class="creator-save-button ${profile.saved ? "active" : ""}" type="button" data-creator-save="${escapeAttribute(profile.id)}" aria-label="Save ${escapeAttribute(profile.handle)}">
-          ${profile.saved ? "★" : "☆"}
+        <button class="creator-save-button ${isSaved ? "active" : ""}" type="button" data-creator-save="${escapeAttribute(profile.id)}" aria-label="Save ${escapeAttribute(profile.handle)}">
+          ${isSaved ? "★" : "☆"}
         </button>
-        <button class="primary-button creator-add-button" type="button" data-creator-add="${escapeAttribute(profile.id)}">Add</button>
+        <button class="primary-button creator-add-button ${isAdded ? "active" : ""}" type="button" data-creator-add="${escapeAttribute(profile.id)}">${isAdded ? "Added" : "Add"}</button>
       </div>
     </article>
   `;
 }
 
-function renderCampaignCard(campaign) {
+export function renderCampaignCard(campaign) {
   return `
     <article class="campaign-card">
       <div class="campaign-top">
@@ -75,7 +92,7 @@ function renderCampaignCard(campaign) {
   `;
 }
 
-function renderFeeCard() {
+export function renderFeeCard() {
   return `
     <article class="chart-card compact">
       <div class="card-toolbar">
@@ -93,7 +110,7 @@ function renderFeeCard() {
   `;
 }
 
-function renderDonutCard(title, centerValue, items) {
+export function renderDonutCard(title, centerValue, items) {
   return `
     <article class="chart-card compact">
       <div class="card-toolbar">
@@ -114,7 +131,7 @@ function renderDonutCard(title, centerValue, items) {
                   <span><span class="legend-mark" style="background:${color}"></span> ${label}</span>
                   <strong>${value}</strong>
                 </div>
-              `
+              `,
             )
             .join("")}
         </div>
@@ -123,7 +140,7 @@ function renderDonutCard(title, centerValue, items) {
   `;
 }
 
-function renderAgeBarsCard() {
+export function renderAgeBarsCard() {
   const labels = ["13-17", "18-24", "25-34", "35-44", "45+"];
   const followers = [18, 72, 104, 64, 28];
   const likes = [10, 48, 86, 40, 16];
@@ -146,7 +163,7 @@ function renderAgeBarsCard() {
                 </div>
                 <div class="bar-label">${label}</div>
               </div>
-            `
+            `,
           )
           .join("")}
       </div>
@@ -154,7 +171,7 @@ function renderAgeBarsCard() {
   `;
 }
 
-function renderRankCard(title, rows) {
+export function renderRankCard(title, rows) {
   return `
     <article class="chart-card">
       <div class="card-toolbar">
@@ -177,7 +194,7 @@ function renderRankCard(title, rows) {
                   <div class="rank-fill" style="width:${Math.min(width, 100)}%"></div>
                 </div>
               </div>
-            `
+            `,
           )
           .join("")}
       </div>
@@ -185,7 +202,7 @@ function renderRankCard(title, rows) {
   `;
 }
 
-function renderEngagementCurveCard() {
+export function renderEngagementCurveCard() {
   return `
     <article class="chart-card">
       <div class="card-toolbar">
@@ -219,7 +236,7 @@ function renderEngagementCurveCard() {
   `;
 }
 
-function renderAffinityCard(title, rows) {
+export function renderAffinityCard(title, rows) {
   return `
     <article class="chart-card">
       <div class="card-toolbar">
@@ -242,7 +259,7 @@ function renderAffinityCard(title, rows) {
                   <div class="rank-fill" style="width:${78 - index * 12}%"></div>
                 </div>
               </div>
-            `
+            `,
           )
           .join("")}
       </div>
@@ -250,7 +267,7 @@ function renderAffinityCard(title, rows) {
   `;
 }
 
-function renderLookalikeCard() {
+export function renderLookalikeCard() {
   return `
     <article class="chart-card">
       <div class="card-toolbar">
@@ -275,7 +292,7 @@ function renderLookalikeCard() {
                 <div><span class="muted">ER</span><br /><strong>${rate}</strong></div>
                 <div><span class="muted">Eng.</span><br /><strong>${engagements}</strong></div>
               </div>
-            `
+            `,
           )
           .join("")}
       </div>
@@ -283,7 +300,7 @@ function renderLookalikeCard() {
   `;
 }
 
-function renderTrendSnapshotCard() {
+export function renderTrendSnapshotCard() {
   return `
     <article class="chart-card">
       <div class="card-toolbar">
@@ -301,7 +318,7 @@ function renderTrendSnapshotCard() {
   `;
 }
 
-function renderTrendCard(card) {
+export function renderTrendCard(card) {
   const points = sparkLine(card.points);
   return `
     <article class="chart-card compact">
@@ -322,7 +339,7 @@ function renderTrendCard(card) {
   `;
 }
 
-function renderTagCard(title, items) {
+export function renderTagCard(title, items) {
   return `
     <article class="chart-card compact">
       <div class="card-toolbar">
@@ -338,7 +355,7 @@ function renderTagCard(title, items) {
   `;
 }
 
-function renderCommonTopicCloud(title, topics, options = {}) {
+export function renderCommonTopicCloud(title, topics, options = {}) {
   const scope = options.scope || "default";
   const note = options.note || "Common topic signals";
   const editable = Boolean(options.editable);
@@ -366,7 +383,9 @@ function renderCommonTopicCloud(title, topics, options = {}) {
         ${topics
           .map((topic) => {
             const scale = topicScale(topic.weight);
-            const active = state.activeTopic.scope === scope && state.activeTopic.label === topic.label;
+            const active =
+              state.activeTopic.scope === scope &&
+              state.activeTopic.label === topic.label;
             const wordButton = `
               <button
                 class="topic-word ${active ? "active" : ""}"

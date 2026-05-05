@@ -61,7 +61,9 @@
 
 .channel-row {
   display: grid;
-  grid-template-columns: minmax(230px, 1.2fr) repeat(6, minmax(100px, 0.8fr)) minmax(170px, 0.9fr) 56px;
+  grid-template-columns:
+    minmax(230px, 1.2fr) repeat(6, minmax(100px, 0.8fr))
+    minmax(170px, 0.9fr) 56px;
   gap: 14px;
   align-items: center;
 }
@@ -180,7 +182,12 @@
 .media-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(12, 11, 16, 0.12) 0%, rgba(12, 11, 16, 0.08) 44%, rgba(12, 11, 16, 0.72) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(12, 11, 16, 0.12) 0%,
+    rgba(12, 11, 16, 0.08) 44%,
+    rgba(12, 11, 16, 0.72) 100%
+  );
 }
 
 .media-topline,

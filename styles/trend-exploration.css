@@ -120,7 +120,10 @@
 
 .trend-audience-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr) minmax(380px, 1.15fr);
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr) minmax(
+      380px,
+      1.15fr
+    );
   gap: 14px;
 }
 
@@ -176,7 +179,11 @@
   width: 118px;
   height: 118px;
   border-radius: 50%;
-  background: conic-gradient(var(--purple) 0 var(--female), var(--blue) var(--female) calc(var(--female) + var(--male)), var(--yellow) calc(var(--female) + var(--male)) 100%);
+  background: conic-gradient(
+    var(--purple) 0 var(--female),
+    var(--blue) var(--female) calc(var(--female) + var(--male)),
+    var(--yellow) calc(var(--female) + var(--male)) 100%
+  );
   position: relative;
   display: grid;
   place-items: center;
@@ -419,7 +426,9 @@
 
 .creator-result-row {
   display: grid;
-  grid-template-columns: 34px 34px 48px minmax(260px, 1.1fr) minmax(420px, 1.4fr) auto;
+  grid-template-columns:
+    34px 34px 48px minmax(260px, 1.1fr) minmax(420px, 1.4fr)
+    auto;
   gap: 12px;
   align-items: center;
   padding: 14px;

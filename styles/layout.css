@@ -103,8 +103,13 @@
 .secondary-button,
 .primary-button,
 .channel-action {
-  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease,
-    color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    opacity 180ms ease;
 }
 
 .nav-item {
@@ -277,7 +282,12 @@
   justify-content: space-between;
   gap: 18px;
   padding: 4px 0 14px;
-  background: linear-gradient(180deg, rgba(241, 239, 243, 0.96), rgba(241, 239, 243, 0.82) 80%, rgba(241, 239, 243, 0));
+  background: linear-gradient(
+    180deg,
+    rgba(241, 239, 243, 0.96),
+    rgba(241, 239, 243, 0.82) 80%,
+    rgba(241, 239, 243, 0)
+  );
   backdrop-filter: blur(12px);
 }
 

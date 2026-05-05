@@ -47,7 +47,9 @@
   }
 
   .channel-row {
-    grid-template-columns: minmax(220px, 1.2fr) repeat(4, minmax(100px, 0.8fr)) minmax(170px, 0.9fr) 56px;
+    grid-template-columns:
+      minmax(220px, 1.2fr) repeat(4, minmax(100px, 0.8fr))
+      minmax(170px, 0.9fr) 56px;
   }
 
   .channel-stat:nth-of-type(n + 6) {

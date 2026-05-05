@@ -1,4 +1,9 @@
-function renderGlobalNav() {
+import { entityItems, globalNav } from "./data/nav.js";
+import { escapeHtml, segmentedButton } from "./helpers.js";
+import { currentTrendLabel } from "./renderTrendExploration.js";
+import { state } from "./state.js";
+
+export function renderGlobalNav() {
   return `
     <div class="logo-lockup">
       <div class="logo-icon">C</div>
@@ -16,12 +21,14 @@ function renderGlobalNav() {
         .map(
           (item) => `
             <button class="nav-item ${isGlobalNavActive(item) ? "active" : ""}" type="button" data-global-view="${
-            item.id === "trend-exploration" ? "trend-exploration" : "creator-profile"
-          }" data-global-id="${item.id}">
+              item.id === "trend-exploration"
+                ? "trend-exploration"
+                : "creator-profile"
+            }" data-global-id="${item.id}">
               <span class="nav-icon">${item.icon}</span>
               <span class="nav-label">${item.label}</span>
             </button>
-          `
+          `,
         )
         .join("")}
     </div>
@@ -32,11 +39,12 @@ function renderGlobalNav() {
 }
 
 function isGlobalNavActive(item) {
-  if (state.globalView === "trend-exploration") return item.id === "trend-exploration";
+  if (state.globalView === "trend-exploration")
+    return item.id === "trend-exploration";
   return item.id === "creator-scouting";
 }
 
-function renderContextRail() {
+export function renderContextRail() {
   if (state.globalView === "trend-exploration") return renderTrendRail();
   return renderEntityRail();
 }
@@ -57,7 +65,7 @@ function renderEntityRail() {
               <div>${item.label}</div>
               <small>${item.meta.replace("\n", "<br />")}</small>
             </button>
-          `
+          `,
         )
         .join("")}
     </div>
@@ -73,7 +81,7 @@ function renderTrendRail() {
     <div class="creator-summary trend-summary">
       <div class="creator-avatar trend-avatar"></div>
       <div class="creator-name">Trend Exploration</div>
-      <div class="creator-meta">Mock social intelligence workspace</div>
+      <div class="creator-meta">Social intelligence workspace</div>
     </div>
     <div class="entity-group-title">Focus</div>
     <div class="trend-rail-list">
@@ -87,13 +95,13 @@ function renderTrendRail() {
       </div>
     </div>
     <div class="entity-bottom">
-      Prototype data only
-      <div class="muted">No scraping or API calls</div>
+      Curated intelligence view
+      <div class="muted">Trend and creator signals</div>
     </div>
   `;
 }
 
-function renderContextTopBar() {
+export function renderContextTopBar() {
   if (state.globalView === "trend-exploration") return renderTrendTopBar();
   return renderTopBar();
 }
@@ -138,7 +146,7 @@ function renderTrendTopBar() {
         </div>
       </div>
       <div class="topbar-right">
-        <button class="secondary-button" type="button">Export mock</button>
+        <button class="secondary-button" type="button">Export</button>
         <button class="primary-button" type="button">Create report</button>
       </div>
     </header>

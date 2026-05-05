@@ -1,10 +1,11 @@
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import http from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const host = "127.0.0.1";
 const port = Number(process.env.PORT) || 3000;
-const root = __dirname;
+const root = path.dirname(fileURLToPath(import.meta.url));
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -19,7 +20,12 @@ const mimeTypes = {
   ".ico": "image/x-icon",
 };
 
-function send(res, statusCode, body, contentType = "text/plain; charset=utf-8") {
+function send(
+  res,
+  statusCode,
+  body,
+  contentType = "text/plain; charset=utf-8",
+) {
   res.writeHead(statusCode, { "Content-Type": contentType });
   res.end(body);
 }
@@ -50,7 +56,9 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    const finalPath = stats.isDirectory() ? path.join(filePath, "index.html") : filePath;
+    const finalPath = stats.isDirectory()
+      ? path.join(filePath, "index.html")
+      : filePath;
 
     fs.readFile(finalPath, (readError, data) => {
       if (readError) {
@@ -65,5 +73,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`CIMS prototype running at http://${host}:${port}`);
+  console.log(`CIMS running at http://${host}:${port}`);
 });
