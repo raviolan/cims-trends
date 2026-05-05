@@ -1,5 +1,5 @@
 const state = {
-  globalView: "creator-profile",
+  globalView: "trend-exploration",
   view: "statistics",
   collaborations: "ongoing",
   audienceMetric: "followers",
