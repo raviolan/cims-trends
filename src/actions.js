@@ -32,6 +32,26 @@ export function setTrendSearch(query) {
   clearActiveTopic("trend");
 }
 
+export function setEmergingKeywordSearch(query) {
+  state.emergingKeywordSearch = String(query || "").trim();
+}
+
+export function setEmergingKeywordSource(source) {
+  const allowed = ["all", "sphere", "reference"];
+  if (allowed.includes(source)) state.emergingKeywordSource = source;
+}
+
+export function setEmergingKeywordPlatform(platform) {
+  const allowed = ["all", "instagram", "tiktok", "youtube"];
+  if (allowed.includes(platform)) state.emergingKeywordPlatform = platform;
+}
+
+export function clearEmergingKeywordFilters() {
+  state.emergingKeywordSearch = "";
+  state.emergingKeywordSource = "all";
+  state.emergingKeywordPlatform = "all";
+}
+
 export function selectTrendBoard(boardId) {
   if (
     boardId === "main" ||
@@ -55,6 +75,16 @@ export function createCustomTrendBoard() {
   state.customTrendBoards = [...state.customTrendBoards, board];
   state.activeTrendBoardId = board.id;
   clearActiveTopic("trend");
+}
+
+export function renameCustomTrendBoard(boardId, rawName) {
+  const board = customTrendBoardById(boardId);
+  if (!board) return;
+  const name = String(rawName || "")
+    .trim()
+    .slice(0, 40);
+  if (!name) return;
+  board.name = name;
 }
 
 export function setActiveTopic(scope, label) {

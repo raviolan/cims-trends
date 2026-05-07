@@ -157,6 +157,9 @@ function renderTopBar() {
 }
 
 function renderTrendTopBar() {
+  const activeBoard = state.customTrendBoards.find(
+    (board) => board.id === state.activeTrendBoardId,
+  );
   return `
     <header class="topbar trend-topbar">
       <div class="topbar-left">
@@ -165,7 +168,15 @@ function renderTrendTopBar() {
           <span>Trend dashboard</span>
         </div>
         <div class="handle-block">
-          <h1>Trend Exploration</h1>
+          ${
+            activeBoard
+              ? `<form class="custom-board-title-form" data-custom-board-rename data-custom-board="${escapeAttribute(activeBoard.id)}">
+                  <input class="custom-board-title-input" name="customTrendBoardName" type="text" maxlength="40" aria-label="Custom set name" value="${escapeAttribute(
+                    activeBoard.name,
+                  )}" />
+                </form>`
+              : `<h1>Trend Exploration</h1>`
+          }
         </div>
       </div>
       <div class="topbar-right">

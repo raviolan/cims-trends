@@ -34,6 +34,15 @@
     grid-template-columns: 1fr;
   }
 
+  .emerging-keyword-controls,
+  .emerging-keyword-row {
+    grid-template-columns: 1fr;
+  }
+
+  .emerging-keyword-stats {
+    grid-template-columns: repeat(2, minmax(90px, 160px));
+  }
+
   .creator-result-row {
     grid-template-columns: 34px 34px 48px minmax(260px, 1fr);
   }
@@ -108,5 +117,16 @@
   .topic-cloud-editor,
   .topic-cloud-input {
     width: 100%;
+  }
+
+  .selected-reference-creator {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+  }
+
+  .reference-preview-metrics {
+    grid-column: 2 / -1;
+    justify-self: start;
+    flex-wrap: wrap;
+    margin-top: 2px;
   }
 }

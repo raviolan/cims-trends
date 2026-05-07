@@ -4,7 +4,9 @@ import {
   applyCreatorSuggestion,
   clearCustomTrendBoard,
   clearCreatorResultControls,
+  clearEmergingKeywordFilters,
   createCustomTrendBoard,
+  renameCustomTrendBoard,
   removeCustomTrendReferenceCreator,
   removeCreatorResultFilter,
   removeTrendTopic,
@@ -13,6 +15,9 @@ import {
   setCreatorResultSort,
   setCreatorView,
   setCustomTrendCreatorSearch,
+  setEmergingKeywordPlatform,
+  setEmergingKeywordSearch,
+  setEmergingKeywordSource,
   setGlobalView,
   setSegmentValue,
   selectTrendBoard,
@@ -103,6 +108,23 @@ function handleClick(event) {
   }
   if (target.dataset.customTrendClear !== undefined)
     return update(() => clearCustomTrendBoard(target.dataset.customBoard));
+  if (target.dataset.emergingKeywordSource)
+    return update(() =>
+      setEmergingKeywordSource(target.dataset.emergingKeywordSource),
+    );
+  if (target.dataset.emergingKeywordPlatform)
+    return update(() =>
+      setEmergingKeywordPlatform(target.dataset.emergingKeywordPlatform),
+    );
+  if (target.dataset.emergingKeywordClear !== undefined)
+    return update(clearEmergingKeywordFilters);
+  if (target.dataset.emergingKeywordAdd)
+    return update(() =>
+      addTrendTopic(
+        target.dataset.topicContext || currentTrendTopicContextKey(),
+        target.dataset.emergingKeywordAdd,
+      ),
+    );
 
   const segmentItem = target.closest("[data-segment] [data-value]");
   if (segmentItem) {
@@ -123,6 +145,15 @@ function handleSubmit(event) {
     return update(() => setTrendSearch(new FormData(form).get("trendSearch")));
   }
 
+  if (form.matches("[data-emerging-keyword-search]")) {
+    event.preventDefault();
+    return update(() =>
+      setEmergingKeywordSearch(
+        new FormData(form).get("emergingKeywordSearch"),
+      ),
+    );
+  }
+
   if (form.matches("[data-topic-add-form]")) {
     event.preventDefault();
     return update(() =>
@@ -137,6 +168,16 @@ function handleSubmit(event) {
     event.preventDefault();
     return update(() =>
       setCreatorResultSearch(new FormData(form).get("creatorResultSearch")),
+    );
+  }
+
+  if (form.matches("[data-custom-board-rename]")) {
+    event.preventDefault();
+    return update(() =>
+      renameCustomTrendBoard(
+        form.dataset.customBoard,
+        new FormData(form).get("customTrendBoardName"),
+      ),
     );
   }
 

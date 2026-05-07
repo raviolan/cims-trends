@@ -2,11 +2,15 @@ import {
   addCustomTrendReferenceCreator,
   addTrendTopic,
   clearCustomTrendBoard,
+  clearEmergingKeywordFilters,
   createCustomTrendBoard,
+  renameCustomTrendBoard,
   removeTrendTopic,
   selectTrendBoard,
   setActiveTopic,
   setCreatorView,
+  setCustomTrendCreatorSearch,
+  setEmergingKeywordSearch,
   setGlobalView,
   setTrendGenre,
   setTrendSearch,
@@ -16,6 +20,7 @@ import {
   renderOverview,
   renderStatistics,
 } from "../src/renderCreator.js";
+import { renderContextRail, renderContextTopBar } from "../src/renderShell.js";
 import { renderTrendExploration } from "../src/renderTrendExploration.js";
 import { state } from "../src/state.js";
 
@@ -26,6 +31,114 @@ function assert(name, condition) {
 }
 
 setGlobalView("trend-exploration");
+const demoBoard = state.customTrendBoards.find(
+  (board) => board.id === "demo-breakfast",
+);
+assert("Initial state includes demo board", Boolean(demoBoard));
+assert("Demo board is active initially", state.activeTrendBoardId === "demo-breakfast");
+assert("Demo board uses breakfast keywords", demoBoard?.keywords.includes("protein breakfast"));
+assert(
+  "Demo board uses selected reference creators",
+  demoBoard?.referenceCreatorIds.includes("ref-leanne") &&
+    demoBoard?.referenceCreatorIds.includes("ref-mayafood"),
+);
+const demoTrend = renderTrendExploration();
+const demoRail = renderContextRail();
+const demoTopBar = renderContextTopBar();
+assert("Demo board renders in Focus rail", demoRail.includes("Breakfast"));
+assert(
+  "Demo board name renders as editable title",
+  demoTopBar.includes("custom-board-title-input") &&
+    demoTopBar.includes('value="Breakfast"'),
+);
+assert("Demo breakfast keyword renders", demoTrend.includes("protein breakfast"));
+assert(
+  "Demo reference creators render",
+  demoTrend.includes("@leannefitness") || demoTrend.includes("@mayaskitchen"),
+);
+assert(
+  "Demo selected creators render",
+  demoTrend.includes("@leannefitness") && demoTrend.includes("@mayaskitchen"),
+);
+assert(
+  "Default unselected reference suggestions are hidden",
+  !demoTrend.includes("@nikkietutorials"),
+);
+assert("Selected creator rows include Avg. ER", demoTrend.includes("Avg. ER"));
+assert(
+  "Selected creator rows include Avg. view rate",
+  demoTrend.includes("Avg. view rate"),
+);
+assert(
+  "Newly trending keywords section renders",
+  demoTrend.includes("Newly trending keywords"),
+);
+assert(
+  "Breakfast demo renders food emerging keyword",
+  demoTrend.includes("freezer breakfast prep"),
+);
+assert(
+  "Emerging source filters render",
+  demoTrend.includes('data-emerging-keyword-source="reference"'),
+);
+assert(
+  "Reference emerging keywords render for breakfast custom board",
+  demoTrend.includes("grocery haul breakfast"),
+);
+setEmergingKeywordSearch("pancakes");
+const searchedEmergingKeywords = renderTrendExploration();
+assert(
+  "Emerging keyword search filters results",
+  searchedEmergingKeywords.includes("protein pancakes") &&
+    !searchedEmergingKeywords.includes("coffee protein shake"),
+);
+clearEmergingKeywordFilters();
+addTrendTopic("custom:demo-breakfast:genre:food", "protein pancakes");
+assert(
+  "Adding emerging keyword uses custom keyword state",
+  demoBoard?.keywords.includes("protein pancakes"),
+);
+renameCustomTrendBoard("demo-breakfast", "Morning Meals");
+assert(
+  "Renaming demo board updates state",
+  demoBoard?.name === "Morning Meals",
+);
+assert("Focus rail renders renamed board", renderContextRail().includes("Morning Meals"));
+assert(
+  "Topbar renders renamed board title",
+  renderContextTopBar().includes('value="Morning Meals"'),
+);
+assert(
+  "Custom context uses renamed board",
+  renderTrendExploration().includes("Morning Meals:"),
+);
+renameCustomTrendBoard("demo-breakfast", "   ");
+assert(
+  "Whitespace-only rename does not blank board name",
+  demoBoard?.name === "Morning Meals",
+);
+clearCustomTrendBoard("demo-breakfast");
+assert(
+  "Clearing selected creators shows helper text",
+  renderTrendExploration().includes(
+    "Search and add creators to shape this custom set.",
+  ),
+);
+setCustomTrendCreatorSearch("demo-breakfast", "nikkie");
+const searchedReferenceCreators = renderTrendExploration();
+assert(
+  "Reference creator search shows addable result",
+  searchedReferenceCreators.includes("@nikkietutorials") &&
+    searchedReferenceCreators.includes('data-custom-reference-add="ref-nikkie"'),
+);
+
+selectTrendBoard("main");
+setTrendGenre("Food");
+clearEmergingKeywordFilters();
+assert(
+  "Main board does not show reference-only emerging entries",
+  !renderTrendExploration().includes("protein breakfast bowl"),
+);
 setTrendGenre("Gaming");
 const trend = renderTrendExploration();
 assert("Trend Exploration renders", trend.includes("Trend statistics"));
@@ -75,10 +188,13 @@ assert(
   state.activeTopic.label === "",
 );
 clearCustomTrendBoard(firstBoardId);
+const firstBoard = state.customTrendBoards.find(
+  (board) => board.id === firstBoardId,
+);
 assert(
   "Custom Trend Set clears board inputs",
-  state.customTrendBoards[0].keywords.length === 0 &&
-    state.customTrendBoards[0].referenceCreatorIds.length === 0,
+  firstBoard?.keywords.length === 0 &&
+    firstBoard?.referenceCreatorIds.length === 0,
 );
 createCustomTrendBoard();
 const secondBoardId = state.activeTrendBoardId;

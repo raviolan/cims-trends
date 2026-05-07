@@ -8,7 +8,10 @@ import {
 import { customTrendReferenceCreators } from "./data/customTrendSet.js";
 import {
   fallbackTrendAudience,
+  normalizeEmergingKeyword,
+  normalizedEmergingKeywordSnapshots,
   relatedTopicsForSearch,
+  sortEmergingKeywords,
   statsForSearch,
   trendAudienceByGenre,
   trendGenres,
@@ -72,6 +75,8 @@ export function renderTrendExploration() {
 
     ${activeCustomTrendBoard() ? renderCustomTrendSetSection(topicContextKey, topics) : renderStandardTopicCloudSection(topicContextKey, topics)}
 
+    ${renderEmergingKeywordsSection(topicContextKey)}
+
     <section>
       <div class="section-head">
         <div>
@@ -128,6 +133,7 @@ function renderReferenceCreatorsCard() {
   const board = activeCustomTrendBoard();
   const suggestions = referenceCreatorSuggestions();
   const selected = selectedReferenceCreators();
+  const hasCreatorSearch = Boolean(board.creatorSearch.trim());
   return `
     <article class="chart-card reference-creators-card">
       <div class="card-toolbar">
@@ -152,19 +158,23 @@ function renderReferenceCreatorsCard() {
         </div>
       </form>
 
-      <div class="reference-creator-suggestions">
-        ${
-          suggestions.length
-            ? suggestions.map(renderReferenceCreatorSuggestion).join("")
-            : renderReferenceCreatorEmptyState()
-        }
-      </div>
+      ${
+        hasCreatorSearch
+          ? `<div class="reference-creator-suggestions">
+              ${
+                suggestions.length
+                  ? suggestions.map(renderReferenceCreatorSuggestion).join("")
+                  : renderReferenceCreatorEmptyState()
+              }
+            </div>`
+          : ""
+      }
 
       <div class="selected-reference-creators">
         ${
           selected.length
             ? selected.map(renderSelectedReferenceCreator).join("")
-            : `<div class="reference-empty">No reference creators selected</div>`
+            : `<div class="reference-empty">Search and add creators to shape this custom set.</div>`
         }
       </div>
     </article>
@@ -187,6 +197,7 @@ function renderReferenceCreatorSuggestion(creator) {
 
 function renderSelectedReferenceCreator(creator) {
   const board = activeCustomTrendBoard();
+  const metrics = referenceCreatorPreviewMetrics(creator);
   return `
     <article class="selected-reference-creator">
       <div class="creator-result-avatar ${creator.avatarTone}">${escapeHtml(creator.avatarInitials)}</div>
@@ -194,6 +205,16 @@ function renderSelectedReferenceCreator(creator) {
         <strong>${escapeHtml(creator.handle)}</strong>
         <span>${escapeHtml(platformLabel(creator.platform))} · ${escapeHtml(creator.name)}</span>
         <p>${escapeHtml(creator.category || creator.shortBio)}</p>
+      </div>
+      <div class="reference-preview-metrics">
+        <div class="reference-preview-metric">
+          <span>Avg. ER</span>
+          <strong>${escapeHtml(metrics.engagementRate)}</strong>
+        </div>
+        <div class="reference-preview-metric">
+          <span>Avg. view rate</span>
+          <strong>${escapeHtml(metrics.viewRate)}</strong>
+        </div>
       </div>
       <button class="topic-word-remove selected-reference-remove" type="button" data-custom-reference-remove="${escapeAttribute(creator.id)}" data-custom-board="${escapeAttribute(board.id)}" aria-label="Remove ${escapeAttribute(creator.handle)}">x</button>
     </article>
@@ -205,6 +226,150 @@ function renderReferenceCreatorEmptyState() {
     <div class="reference-creator-empty">
       <strong>No matching creator references</strong>
       <span>Try another creator name, handle, platform, or category.</span>
+    </div>
+  `;
+}
+
+function renderEmergingKeywordsSection(topicContextKey) {
+  const keywords = currentEmergingKeywords();
+  const activeBoard = activeCustomTrendBoard();
+  return `
+    <section class="emerging-keywords">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Newly trending keywords</h2>
+          <div class="subtle-label">${escapeHtml(emergingKeywordsNote())}</div>
+        </div>
+      </div>
+
+      <div class="emerging-keyword-panel chart-card">
+        <div class="emerging-keyword-controls">
+          <form class="emerging-keyword-search" data-emerging-keyword-search>
+            <label class="control-label" for="emerging-keyword-search">Keyword search</label>
+            <div class="search-row">
+              <input id="emerging-keyword-search" name="emergingKeywordSearch" type="search" placeholder="Filter rising keywords" value="${escapeAttribute(
+                state.emergingKeywordSearch,
+              )}" />
+              <button class="primary-button" type="submit">Search</button>
+            </div>
+          </form>
+
+          <div>
+            <div class="control-label">Source</div>
+            <div class="creator-filter-grid">
+              ${emergingSourceOptions()
+                .map(
+                  (option) => `
+                    <button class="creator-filter-button ${state.emergingKeywordSource === option.id ? "active" : ""}" type="button" data-emerging-keyword-source="${escapeAttribute(
+                      option.id,
+                    )}">${escapeHtml(option.label)}</button>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+
+          <div>
+            <div class="control-label">Platform</div>
+            <div class="creator-platform-toggle">
+              ${emergingPlatformOptions()
+                .map(
+                  (option) => `
+                    <button class="creator-platform-button ${state.emergingKeywordPlatform === option.id ? "active" : ""}" type="button" data-emerging-keyword-platform="${escapeAttribute(
+                      option.id,
+                    )}">
+                      <span>${escapeHtml(option.icon)}</span>${escapeHtml(option.label)}
+                    </button>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+        </div>
+
+        ${renderEmergingActiveFilters()}
+
+        <div class="emerging-keyword-list">
+          ${
+            keywords.length
+              ? keywords.map((keyword) =>
+                  renderEmergingKeywordRow(keyword, topicContextKey, activeBoard),
+                ).join("")
+              : renderEmergingKeywordEmptyState()
+          }
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderEmergingActiveFilters() {
+  const chips = [];
+  if (state.emergingKeywordSearch) {
+    chips.push(`Search: ${state.emergingKeywordSearch}`);
+  }
+  if (state.emergingKeywordSource !== "all") {
+    chips.push(`Source: ${emergingSourceLabel(state.emergingKeywordSource)}`);
+  }
+  if (state.emergingKeywordPlatform !== "all") {
+    chips.push(`Platform: ${platformLabel(state.emergingKeywordPlatform)}`);
+  }
+  if (!chips.length) return "";
+  return `
+    <div class="creator-active-filters emerging-active-filters">
+      ${chips
+        .map(
+          (chip) => `
+            <span class="context-pill">${escapeHtml(chip)}</span>
+          `,
+        )
+        .join("")}
+      <button class="active-filter-chip" type="button" data-emerging-keyword-clear>Clear</button>
+    </div>
+  `;
+}
+
+function renderEmergingKeywordRow(keyword, topicContextKey, activeBoard) {
+  return `
+    <article class="emerging-keyword-row">
+      <div class="emerging-keyword-main">
+        <div class="emerging-keyword-title">
+          <strong>${escapeHtml(keyword.label)}</strong>
+          ${keyword.new ? `<span class="emerging-new-badge">New</span>` : ""}
+        </div>
+        <div class="emerging-keyword-meta">
+          <span class="context-pill">${escapeHtml(emergingSourceLabel(keyword.source))}</span>
+          <span class="context-pill">${escapeHtml(platformLabel(keyword.platform))}</span>
+          ${
+            keyword.sampleCreators?.length
+              ? `<span>${escapeHtml(keyword.sampleCreators.slice(0, 3).join(", "))}</span>`
+              : ""
+          }
+        </div>
+      </div>
+      <div class="emerging-keyword-stats">
+        <div>
+          <span>Growth</span>
+          <strong>+${formatPercent(keyword.growth)}</strong>
+        </div>
+        <div>
+          <span>Mentions</span>
+          <strong>${formatCompactNumber(keyword.currentMentions)}</strong>
+        </div>
+      </div>
+      ${
+        activeBoard
+          ? `<button class="secondary-button" type="button" data-emerging-keyword-add="${escapeAttribute(keyword.label)}" data-topic-context="${escapeAttribute(topicContextKey)}">Add</button>`
+          : ""
+      }
+    </article>
+  `;
+}
+
+function renderEmergingKeywordEmptyState() {
+  return `
+    <div class="emerging-keyword-empty">
+      No newly trending keywords match these filters.
     </div>
   `;
 }
@@ -669,6 +834,150 @@ function currentTrendStats() {
   return applyCustomStatInfluence(base);
 }
 
+function currentEmergingKeywords() {
+  const activeBoard = activeCustomTrendBoard();
+  const selectedReferences = selectedReferenceCreators();
+  const canShowReference = Boolean(activeBoard && selectedReferences.length);
+  const entries = [
+    ...sphereEmergingKeywords(),
+    ...(canShowReference ? referenceEmergingKeywords(selectedReferences) : []),
+  ];
+  const sourceFiltered =
+    state.emergingKeywordSource === "all"
+      ? entries
+      : entries.filter((entry) => entry.source === state.emergingKeywordSource);
+  const platformFiltered =
+    state.emergingKeywordPlatform === "all"
+      ? sourceFiltered
+      : sourceFiltered.filter(
+          (entry) => entry.platform === state.emergingKeywordPlatform,
+        );
+  const query = state.emergingKeywordSearch.trim().toLowerCase();
+  const searched = query
+    ? platformFiltered.filter((entry) =>
+        [
+          entry.label,
+          entry.source,
+          entry.platform,
+          ...(entry.sampleCreators || []),
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(query),
+      )
+    : platformFiltered;
+  return sortEmergingKeywords(dedupeEmergingKeywords(searched)).slice(0, 8);
+}
+
+function sphereEmergingKeywords() {
+  const context = currentTrendLabel().toLowerCase();
+  return normalizedEmergingKeywordSnapshots().filter((entry) => {
+    if (entry.source !== "sphere") return false;
+    const tags = (entry.sphereTags || []).map((tag) => tag.toLowerCase());
+    if (state.trendMode === "genre") return tags.includes(context);
+    const haystack = [entry.label, ...tags, ...(entry.sampleCreators || [])]
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(context) || context.includes(entry.label);
+  });
+}
+
+function referenceEmergingKeywords(references) {
+  const selectedIds = new Set(references.map((creator) => creator.id));
+  const snapshotEntries = normalizedEmergingKeywordSnapshots().filter(
+    (entry) =>
+      entry.source === "reference" &&
+      (entry.referenceCreatorIds || []).some((id) => selectedIds.has(id)),
+  );
+  return sortEmergingKeywords([
+    ...snapshotEntries,
+    ...derivedReferenceEmergingKeywords(references),
+  ]);
+}
+
+function derivedReferenceEmergingKeywords(references) {
+  const rows = [];
+  const seen = new Set();
+  references.forEach((creator, creatorIndex) => {
+    const lookalikes = fallbackCreatorResults.filter((profile) =>
+      (creator.lookalikeCreatorIds || []).includes(profile.id),
+    );
+    const labels = [
+      ...(creator.topics || []),
+      ...lookalikes.flatMap((profile) => profile.matchTopics || []),
+    ].filter((label) => !trendGenres.includes(label));
+
+    labels.forEach((label, labelIndex) => {
+      const key = label.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      const matchedLookalikes = lookalikes.filter((profile) =>
+        (profile.matchTopics || []).some(
+          (topic) => topic.toLowerCase() === key,
+        ),
+      );
+      rows.push(
+        normalizeEmergingKeyword({
+          label,
+          source: "reference",
+          platform: creator.platform,
+          currentMentions: 420 + key.length * 18 + labelIndex * 34,
+          previousMentions:
+            (labelIndex + creatorIndex) % 4 === 0
+              ? 0
+              : 95 + labelIndex * 24,
+          sampleCreators: [
+            creator.handle,
+            ...matchedLookalikes.map((profile) => profile.handle),
+          ].slice(0, 3),
+        }),
+      );
+    });
+  });
+  return rows;
+}
+
+function dedupeEmergingKeywords(entries) {
+  const seen = new Set();
+  return entries.filter((entry) => {
+    const key = `${entry.source}:${entry.platform}:${entry.label.toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function emergingKeywordsNote() {
+  const activeBoard = activeCustomTrendBoard();
+  if (activeBoard && selectedReferenceCreators().length) {
+    return "Rising terms from this sphere and selected reference creators";
+  }
+  return "Rising terms in the selected sphere";
+}
+
+function emergingSourceOptions() {
+  return [
+    { id: "all", label: "All" },
+    { id: "sphere", label: "Sphere" },
+    { id: "reference", label: "Reference profiles" },
+  ];
+}
+
+function emergingPlatformOptions() {
+  return [
+    { id: "all", label: "All", icon: "A" },
+    { id: "instagram", label: "Instagram", icon: "IG" },
+    { id: "tiktok", label: "TikTok", icon: "TT" },
+    { id: "youtube", label: "YouTube", icon: "YT" },
+  ];
+}
+
+function emergingSourceLabel(source) {
+  if (source === "reference") return "Reference profiles";
+  if (source === "sphere") return "Sphere";
+  return "All";
+}
+
 function selectedReferenceCreators() {
   const activeBoard = activeCustomTrendBoard();
   const selected = new Set(activeBoard?.referenceCreatorIds || []);
@@ -681,25 +990,53 @@ function referenceCreatorSuggestions() {
   const activeBoard = activeCustomTrendBoard();
   const selected = new Set(activeBoard?.referenceCreatorIds || []);
   const query = (activeBoard?.creatorSearch || "").trim().toLowerCase();
+  if (!query) return [];
   const available = customTrendReferenceCreators.filter(
     (creator) => !selected.has(creator.id),
   );
-  const matches = query
-    ? available.filter((creator) =>
-        [
-          creator.handle,
-          creator.name,
-          creator.platform,
-          creator.category,
-          creator.shortBio,
-          ...(creator.topics || []),
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(query),
-      )
-    : available;
+  const matches = available.filter((creator) =>
+    [
+      creator.handle,
+      creator.name,
+      creator.platform,
+      creator.category,
+      creator.shortBio,
+      ...(creator.topics || []),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(query),
+  );
   return matches.slice(0, 4);
+}
+
+function referenceCreatorPreviewMetrics(creator) {
+  const lookalikeIds = new Set(creator.lookalikeCreatorIds || []);
+  const profiles = fallbackCreatorResults.filter((profile) =>
+    lookalikeIds.has(profile.id),
+  );
+  return {
+    engagementRate: formattedAverage(
+      profiles.map((profile) => profile.engagementRate),
+    ),
+    viewRate: formattedAverage(
+      profiles.map((profile) => {
+        const followers = Number(profile.followers);
+        const avgViews = Number(profile.avgViews);
+        if (!Number.isFinite(followers) || followers <= 0) return null;
+        if (!Number.isFinite(avgViews)) return null;
+        return (avgViews / followers) * 100;
+      }),
+    ),
+  };
+}
+
+function formattedAverage(values) {
+  const valid = values.map(Number).filter(Number.isFinite);
+  if (!valid.length) return "-";
+  const average =
+    valid.reduce((total, value) => total + value, 0) / valid.length;
+  return formatPercent(average);
 }
 
 function enrichCustomTrendTopics(baseTopics) {

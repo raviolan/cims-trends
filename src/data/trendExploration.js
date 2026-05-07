@@ -405,6 +405,219 @@ export const trendAudienceByGenre = {
   },
 };
 
+export const emergingKeywordSnapshots = [
+  {
+    label: "protein pancakes",
+    source: "sphere",
+    platform: "tiktok",
+    sphereTags: ["Food", "Fitness & health"],
+    currentMentions: 1840,
+    previousMentions: 820,
+    sampleCreators: ["@mealprepmaja", "@leannefitness"],
+  },
+  {
+    label: "coffee protein shake",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Food", "Fitness & health"],
+    currentMentions: 1260,
+    previousMentions: 140,
+    sampleCreators: ["@mayaskitchen", "@mealprepmaja"],
+  },
+  {
+    label: "freezer breakfast prep",
+    source: "sphere",
+    platform: "youtube",
+    sphereTags: ["Food"],
+    currentMentions: 760,
+    previousMentions: 38,
+    sampleCreators: ["@mealprepmaja"],
+  },
+  {
+    label: "soft glam reset",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Fashion & beauty"],
+    currentMentions: 2180,
+    previousMentions: 980,
+    sampleCreators: ["@nikkietutorials", "@linneastyle"],
+  },
+  {
+    label: "barrier repair makeup",
+    source: "sphere",
+    platform: "tiktok",
+    sphereTags: ["Fashion & beauty"],
+    currentMentions: 930,
+    previousMentions: 35,
+    sampleCreators: ["@nikkietutorials"],
+  },
+  {
+    label: "zone 2 walk",
+    source: "sphere",
+    platform: "tiktok",
+    sphereTags: ["Fitness & health"],
+    currentMentions: 1510,
+    previousMentions: 610,
+    sampleCreators: ["@leannefitness"],
+  },
+  {
+    label: "mobility snack",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Fitness & health"],
+    currentMentions: 690,
+    previousMentions: 42,
+    sampleCreators: ["@leannefitness"],
+  },
+  {
+    label: "AI meeting notes",
+    source: "sphere",
+    platform: "youtube",
+    sphereTags: ["Tech", "Education"],
+    currentMentions: 2410,
+    previousMentions: 1050,
+    sampleCreators: ["@techwithnoah", "@alextechdesk"],
+  },
+  {
+    label: "desk cable audit",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Tech"],
+    currentMentions: 840,
+    previousMentions: 0,
+    sampleCreators: ["@alextechdesk"],
+  },
+  {
+    label: "budget reset payday",
+    source: "sphere",
+    platform: "tiktok",
+    sphereTags: ["Finance"],
+    currentMentions: 1320,
+    previousMentions: 520,
+    sampleCreators: ["@financewithfreja"],
+  },
+  {
+    label: "carry-on capsule",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Travel", "Fashion & beauty"],
+    currentMentions: 1180,
+    previousMentions: 430,
+    sampleCreators: ["@travelsofella"],
+  },
+  {
+    label: "study sprint timer",
+    source: "sphere",
+    platform: "youtube",
+    sphereTags: ["Education"],
+    currentMentions: 970,
+    previousMentions: 44,
+    sampleCreators: ["@studywithsara"],
+  },
+  {
+    label: "toddler snack tray",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Parenting", "Food"],
+    currentMentions: 890,
+    previousMentions: 290,
+    sampleCreators: ["@parentingnora"],
+  },
+  {
+    label: "office POV audio",
+    source: "sphere",
+    platform: "tiktok",
+    sphereTags: ["Comedy"],
+    currentMentions: 1730,
+    previousMentions: 510,
+    sampleCreators: ["@dailychaos"],
+  },
+  {
+    label: "protein breakfast bowl",
+    source: "reference",
+    platform: "tiktok",
+    referenceCreatorIds: ["ref-leanne", "ref-mayafood"],
+    currentMentions: 960,
+    previousMentions: 80,
+    sampleCreators: ["@leannefitness", "@mealprepmaja"],
+  },
+  {
+    label: "grocery haul breakfast",
+    source: "reference",
+    platform: "instagram",
+    referenceCreatorIds: ["ref-mayafood"],
+    currentMentions: 720,
+    previousMentions: 0,
+    sampleCreators: ["@mayaskitchen", "@mealprepmaja"],
+  },
+  {
+    label: "coffee routine prep",
+    source: "reference",
+    platform: "instagram",
+    referenceCreatorIds: ["ref-mayafood", "ref-leanne"],
+    currentMentions: 610,
+    previousMentions: 45,
+    sampleCreators: ["@mayaskitchen"],
+  },
+  {
+    label: "creator desk setup",
+    source: "reference",
+    platform: "youtube",
+    referenceCreatorIds: ["ref-alex"],
+    currentMentions: 1040,
+    previousMentions: 260,
+    sampleCreators: ["@alextechdesk", "@techwithnoah"],
+  },
+  {
+    label: "ranked patch loadout",
+    source: "reference",
+    platform: "tiktok",
+    referenceCreatorIds: ["ref-caspergaming"],
+    currentMentions: 1380,
+    previousMentions: 490,
+    sampleCreators: ["@casperplays", "@rankedrasmus"],
+  },
+  {
+    label: "soft tailoring capsule",
+    source: "reference",
+    platform: "instagram",
+    referenceCreatorIds: ["ref-matilda"],
+    currentMentions: 1180,
+    previousMentions: 380,
+    sampleCreators: ["@matildadjerf", "@linneastyle"],
+  },
+];
+
+export function normalizeEmergingKeyword(entry) {
+  const currentMentions = Number(entry.currentMentions) || 0;
+  const previousMentions = Number(entry.previousMentions) || 0;
+  const growth =
+    previousMentions > 0
+      ? ((currentMentions - previousMentions) / previousMentions) * 100
+      : currentMentions > 0
+        ? 100
+        : 0;
+  return {
+    ...entry,
+    currentMentions,
+    previousMentions,
+    growth: Number(growth.toFixed(1)),
+    new: previousMentions < 50,
+  };
+}
+
+export function sortEmergingKeywords(keywords) {
+  return [...keywords].sort((a, b) => {
+    if (a.new !== b.new) return a.new ? -1 : 1;
+    if (b.growth !== a.growth) return b.growth - a.growth;
+    return b.currentMentions - a.currentMentions;
+  });
+}
+
+export function normalizedEmergingKeywordSnapshots() {
+  return sortEmergingKeywords(emergingKeywordSnapshots.map(normalizeEmergingKeyword));
+}
+
 export function relatedTopicsForSearch(keyword) {
   const clean = keyword.toLowerCase().replace(/\s+/g, " ").trim();
   const seeds = [
