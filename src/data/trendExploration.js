@@ -588,6 +588,144 @@ export const emergingKeywordSnapshots = [
   },
 ];
 
+export const decliningTrendSnapshots = [
+  {
+    label: "overnight oats jar",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Food", "Fitness & health"],
+    currentMentions: 540,
+    previousMentions: 1320,
+    sampleCreators: ["@mealprepmaja", "@mayaskitchen"],
+  },
+  {
+    label: "whipped coffee",
+    source: "sphere",
+    platform: "tiktok",
+    sphereTags: ["Food"],
+    currentMentions: 310,
+    previousMentions: 1180,
+    sampleCreators: ["@mayaskitchen"],
+  },
+  {
+    label: "smoothie bowl art",
+    source: "sphere",
+    platform: "youtube",
+    sphereTags: ["Food", "Fitness & health"],
+    currentMentions: 430,
+    previousMentions: 980,
+    sampleCreators: ["@mealprepmaja"],
+  },
+  {
+    label: "clean girl bun",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Fashion & beauty"],
+    currentMentions: 860,
+    previousMentions: 1760,
+    sampleCreators: ["@linneastyle", "@matildadjerf"],
+  },
+  {
+    label: "12-3-30 treadmill",
+    source: "sphere",
+    platform: "tiktok",
+    sphereTags: ["Fitness & health"],
+    currentMentions: 690,
+    previousMentions: 1490,
+    sampleCreators: ["@leannefitness"],
+  },
+  {
+    label: "RGB desk tour",
+    source: "sphere",
+    platform: "youtube",
+    sphereTags: ["Tech"],
+    currentMentions: 520,
+    previousMentions: 1210,
+    sampleCreators: ["@alextechdesk"],
+  },
+  {
+    label: "cash stuffing binder",
+    source: "sphere",
+    platform: "tiktok",
+    sphereTags: ["Finance"],
+    currentMentions: 440,
+    previousMentions: 1030,
+    sampleCreators: ["@financewithfreja"],
+  },
+  {
+    label: "airport outfit check",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Travel", "Fashion & beauty"],
+    currentMentions: 760,
+    previousMentions: 1510,
+    sampleCreators: ["@travelsofella"],
+  },
+  {
+    label: "study with me live",
+    source: "sphere",
+    platform: "youtube",
+    sphereTags: ["Education"],
+    currentMentions: 580,
+    previousMentions: 1240,
+    sampleCreators: ["@studywithsara"],
+  },
+  {
+    label: "baby led weaning haul",
+    source: "sphere",
+    platform: "instagram",
+    sphereTags: ["Parenting", "Food"],
+    currentMentions: 390,
+    previousMentions: 910,
+    sampleCreators: ["@parentingnora"],
+  },
+  {
+    label: "meal prep containers",
+    source: "reference",
+    platform: "instagram",
+    referenceCreatorIds: ["ref-mayafood"],
+    currentMentions: 360,
+    previousMentions: 940,
+    sampleCreators: ["@mayaskitchen", "@mealprepmaja"],
+  },
+  {
+    label: "cold brew breakfast",
+    source: "reference",
+    platform: "tiktok",
+    referenceCreatorIds: ["ref-leanne", "ref-mayafood"],
+    currentMentions: 280,
+    previousMentions: 820,
+    sampleCreators: ["@leannefitness", "@mayaskitchen"],
+  },
+  {
+    label: "desk setup tour",
+    source: "reference",
+    platform: "youtube",
+    referenceCreatorIds: ["ref-alex"],
+    currentMentions: 470,
+    previousMentions: 1020,
+    sampleCreators: ["@alextechdesk", "@techwithnoah"],
+  },
+  {
+    label: "old patch recap",
+    source: "reference",
+    platform: "tiktok",
+    referenceCreatorIds: ["ref-caspergaming"],
+    currentMentions: 330,
+    previousMentions: 840,
+    sampleCreators: ["@casperplays", "@rankedrasmus"],
+  },
+  {
+    label: "quiet luxury haul",
+    source: "reference",
+    platform: "instagram",
+    referenceCreatorIds: ["ref-matilda"],
+    currentMentions: 520,
+    previousMentions: 1180,
+    sampleCreators: ["@matildadjerf", "@linneastyle"],
+  },
+];
+
 export function normalizeEmergingKeyword(entry) {
   const currentMentions = Number(entry.currentMentions) || 0;
   const previousMentions = Number(entry.previousMentions) || 0;
@@ -616,6 +754,35 @@ export function sortEmergingKeywords(keywords) {
 
 export function normalizedEmergingKeywordSnapshots() {
   return sortEmergingKeywords(emergingKeywordSnapshots.map(normalizeEmergingKeyword));
+}
+
+export function normalizeDecliningTrend(entry) {
+  const currentMentions = Number(entry.currentMentions) || 0;
+  const previousMentions = Number(entry.previousMentions) || 0;
+  const decline =
+    previousMentions > 0
+      ? ((previousMentions - currentMentions) / previousMentions) * 100
+      : 0;
+  return {
+    ...entry,
+    currentMentions,
+    previousMentions,
+    decline: Number(Math.max(0, decline).toFixed(1)),
+  };
+}
+
+export function sortDecliningTrends(trends) {
+  return [...trends].sort((a, b) => {
+    if (b.decline !== a.decline) return b.decline - a.decline;
+    if (b.previousMentions !== a.previousMentions) {
+      return b.previousMentions - a.previousMentions;
+    }
+    return b.currentMentions - a.currentMentions;
+  });
+}
+
+export function normalizedDecliningTrendSnapshots() {
+  return sortDecliningTrends(decliningTrendSnapshots.map(normalizeDecliningTrend));
 }
 
 export function relatedTopicsForSearch(keyword) {

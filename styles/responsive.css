@@ -34,12 +34,12 @@
     grid-template-columns: 1fr;
   }
 
-  .emerging-keyword-controls,
-  .emerging-keyword-row {
+  .trend-keyword-insights,
+  .keyword-insight-row {
     grid-template-columns: 1fr;
   }
 
-  .emerging-keyword-stats {
+  .keyword-insight-stats {
     grid-template-columns: repeat(2, minmax(90px, 160px));
   }
 

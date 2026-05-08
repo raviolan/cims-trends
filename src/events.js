@@ -4,6 +4,7 @@ import {
   applyCreatorSuggestion,
   clearCustomTrendBoard,
   clearCreatorResultControls,
+  clearDecliningTrendFilters,
   clearEmergingKeywordFilters,
   createCustomTrendBoard,
   renameCustomTrendBoard,
@@ -15,6 +16,9 @@ import {
   setCreatorResultSort,
   setCreatorView,
   setCustomTrendCreatorSearch,
+  setDecliningTrendPlatform,
+  setDecliningTrendSearch,
+  setDecliningTrendSource,
   setEmergingKeywordPlatform,
   setEmergingKeywordSearch,
   setEmergingKeywordSource,
@@ -118,6 +122,16 @@ function handleClick(event) {
     );
   if (target.dataset.emergingKeywordClear !== undefined)
     return update(clearEmergingKeywordFilters);
+  if (target.dataset.decliningTrendSource)
+    return update(() =>
+      setDecliningTrendSource(target.dataset.decliningTrendSource),
+    );
+  if (target.dataset.decliningTrendPlatform)
+    return update(() =>
+      setDecliningTrendPlatform(target.dataset.decliningTrendPlatform),
+    );
+  if (target.dataset.decliningTrendClear !== undefined)
+    return update(clearDecliningTrendFilters);
   if (target.dataset.emergingKeywordAdd)
     return update(() =>
       addTrendTopic(
@@ -151,6 +165,13 @@ function handleSubmit(event) {
       setEmergingKeywordSearch(
         new FormData(form).get("emergingKeywordSearch"),
       ),
+    );
+  }
+
+  if (form.matches("[data-declining-trend-search]")) {
+    event.preventDefault();
+    return update(() =>
+      setDecliningTrendSearch(new FormData(form).get("decliningTrendSearch")),
     );
   }
 

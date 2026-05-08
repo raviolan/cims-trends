@@ -8,9 +8,12 @@ import {
 import { customTrendReferenceCreators } from "./data/customTrendSet.js";
 import {
   fallbackTrendAudience,
+  normalizeDecliningTrend,
   normalizeEmergingKeyword,
+  normalizedDecliningTrendSnapshots,
   normalizedEmergingKeywordSnapshots,
   relatedTopicsForSearch,
+  sortDecliningTrends,
   sortEmergingKeywords,
   statsForSearch,
   trendAudienceByGenre,
@@ -232,9 +235,19 @@ function renderReferenceCreatorEmptyState() {
 
 function renderEmergingKeywordsSection(topicContextKey) {
   const keywords = currentEmergingKeywords();
+  const decliningTrends = currentDecliningTrends();
   const activeBoard = activeCustomTrendBoard();
   return `
-    <section class="emerging-keywords">
+    <section class="trend-keyword-insights">
+      ${renderEmergingKeywordsCard(keywords, topicContextKey, activeBoard)}
+      ${renderDecliningTrendsCard(decliningTrends)}
+    </section>
+  `;
+}
+
+function renderEmergingKeywordsCard(keywords, topicContextKey, activeBoard) {
+  return `
+    <article class="keyword-insight-card emerging-keywords chart-card">
       <div class="section-head">
         <div>
           <h2 class="section-title">Newly trending keywords</h2>
@@ -242,64 +255,161 @@ function renderEmergingKeywordsSection(topicContextKey) {
         </div>
       </div>
 
-      <div class="emerging-keyword-panel chart-card">
-        <div class="emerging-keyword-controls">
-          <form class="emerging-keyword-search" data-emerging-keyword-search>
-            <label class="control-label" for="emerging-keyword-search">Keyword search</label>
-            <div class="search-row">
-              <input id="emerging-keyword-search" name="emergingKeywordSearch" type="search" placeholder="Filter rising keywords" value="${escapeAttribute(
-                state.emergingKeywordSearch,
-              )}" />
-              <button class="primary-button" type="submit">Search</button>
-            </div>
-          </form>
-
-          <div>
-            <div class="control-label">Source</div>
-            <div class="creator-filter-grid">
-              ${emergingSourceOptions()
-                .map(
-                  (option) => `
-                    <button class="creator-filter-button ${state.emergingKeywordSource === option.id ? "active" : ""}" type="button" data-emerging-keyword-source="${escapeAttribute(
-                      option.id,
-                    )}">${escapeHtml(option.label)}</button>
-                  `,
-                )
-                .join("")}
-            </div>
+      <div class="emerging-keyword-controls">
+        <form class="emerging-keyword-search" data-emerging-keyword-search>
+          <label class="control-label" for="emerging-keyword-search">Keyword search</label>
+          <div class="search-row">
+            <input id="emerging-keyword-search" name="emergingKeywordSearch" type="search" placeholder="Filter rising keywords" value="${escapeAttribute(
+              state.emergingKeywordSearch,
+            )}" />
+            <button class="primary-button" type="submit">Search</button>
           </div>
+        </form>
 
-          <div>
-            <div class="control-label">Platform</div>
-            <div class="creator-platform-toggle">
-              ${emergingPlatformOptions()
-                .map(
-                  (option) => `
-                    <button class="creator-platform-button ${state.emergingKeywordPlatform === option.id ? "active" : ""}" type="button" data-emerging-keyword-platform="${escapeAttribute(
-                      option.id,
-                    )}">
-                      <span>${escapeHtml(option.icon)}</span>${escapeHtml(option.label)}
-                    </button>
-                  `,
-                )
-                .join("")}
-            </div>
+        <div>
+          <div class="control-label">Source</div>
+          <div class="creator-filter-grid">
+            ${emergingSourceOptions()
+              .map(
+                (option) => `
+                  <button class="creator-filter-button ${state.emergingKeywordSource === option.id ? "active" : ""}" type="button" data-emerging-keyword-source="${escapeAttribute(
+                    option.id,
+                  )}">${escapeHtml(option.label)}</button>
+                `,
+              )
+              .join("")}
           </div>
         </div>
 
-        ${renderEmergingActiveFilters()}
-
-        <div class="emerging-keyword-list">
-          ${
-            keywords.length
-              ? keywords.map((keyword) =>
-                  renderEmergingKeywordRow(keyword, topicContextKey, activeBoard),
-                ).join("")
-              : renderEmergingKeywordEmptyState()
-          }
+        <div>
+          <div class="control-label">Platform</div>
+          <div class="creator-platform-toggle">
+            ${emergingPlatformOptions()
+              .map(
+                (option) => `
+                  <button class="creator-platform-button ${state.emergingKeywordPlatform === option.id ? "active" : ""}" type="button" data-emerging-keyword-platform="${escapeAttribute(
+                    option.id,
+                  )}">
+                    <span>${escapeHtml(option.icon)}</span>${escapeHtml(option.label)}
+                  </button>
+                `,
+              )
+              .join("")}
+          </div>
         </div>
       </div>
-    </section>
+
+      ${renderEmergingActiveFilters()}
+
+      <div class="keyword-insight-list" data-keyword-insight-list="emerging">
+        ${
+          keywords.length
+            ? keywords
+                .map((keyword) =>
+                  renderEmergingKeywordRow(keyword, topicContextKey, activeBoard),
+                )
+                .join("")
+            : renderKeywordInsightEmptyState(
+                "No newly trending keywords match these filters.",
+              )
+        }
+      </div>
+    </article>
+  `;
+}
+
+function renderDecliningTrendsCard(trends) {
+  return `
+    <article class="keyword-insight-card declining-trends chart-card">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">Declining trends</h2>
+          <div class="subtle-label">${escapeHtml(decliningTrendsNote())}</div>
+        </div>
+      </div>
+
+      <div class="declining-trend-controls">
+        <form class="declining-trend-search" data-declining-trend-search>
+          <label class="control-label" for="declining-trend-search">Trend search</label>
+          <div class="search-row">
+            <input id="declining-trend-search" name="decliningTrendSearch" type="search" placeholder="Filter declining trends" value="${escapeAttribute(
+              state.decliningTrendSearch,
+            )}" />
+            <button class="primary-button" type="submit">Search</button>
+          </div>
+        </form>
+
+        <div>
+          <div class="control-label">Source</div>
+          <div class="creator-filter-grid">
+            ${emergingSourceOptions()
+              .map(
+                (option) => `
+                  <button class="creator-filter-button ${state.decliningTrendSource === option.id ? "active" : ""}" type="button" data-declining-trend-source="${escapeAttribute(
+                    option.id,
+                  )}">${escapeHtml(option.label)}</button>
+                `,
+              )
+              .join("")}
+          </div>
+        </div>
+
+        <div>
+          <div class="control-label">Platform</div>
+          <div class="creator-platform-toggle">
+            ${emergingPlatformOptions()
+              .map(
+                (option) => `
+                  <button class="creator-platform-button ${state.decliningTrendPlatform === option.id ? "active" : ""}" type="button" data-declining-trend-platform="${escapeAttribute(
+                    option.id,
+                  )}">
+                    <span>${escapeHtml(option.icon)}</span>${escapeHtml(option.label)}
+                  </button>
+                `,
+              )
+              .join("")}
+          </div>
+        </div>
+      </div>
+
+      ${renderDecliningActiveFilters()}
+
+      <div class="keyword-insight-list" data-keyword-insight-list="declining">
+        ${
+          trends.length
+            ? trends.map(renderDecliningTrendRow).join("")
+            : renderKeywordInsightEmptyState(
+                "No declining trends match this context.",
+              )
+        }
+      </div>
+    </article>
+  `;
+}
+
+function renderDecliningActiveFilters() {
+  const chips = [];
+  if (state.decliningTrendSearch) {
+    chips.push(`Search: ${state.decliningTrendSearch}`);
+  }
+  if (state.decliningTrendSource !== "all") {
+    chips.push(`Source: ${emergingSourceLabel(state.decliningTrendSource)}`);
+  }
+  if (state.decliningTrendPlatform !== "all") {
+    chips.push(`Platform: ${platformLabel(state.decliningTrendPlatform)}`);
+  }
+  if (!chips.length) return "";
+  return `
+    <div class="creator-active-filters declining-active-filters">
+      ${chips
+        .map(
+          (chip) => `
+            <span class="context-pill">${escapeHtml(chip)}</span>
+          `,
+        )
+        .join("")}
+      <button class="active-filter-chip" type="button" data-declining-trend-clear>Clear</button>
+    </div>
   `;
 }
 
@@ -331,13 +441,13 @@ function renderEmergingActiveFilters() {
 
 function renderEmergingKeywordRow(keyword, topicContextKey, activeBoard) {
   return `
-    <article class="emerging-keyword-row">
-      <div class="emerging-keyword-main">
-        <div class="emerging-keyword-title">
+    <article class="keyword-insight-row emerging-keyword-row">
+      <div class="keyword-insight-main">
+        <div class="keyword-insight-title">
           <strong>${escapeHtml(keyword.label)}</strong>
           ${keyword.new ? `<span class="emerging-new-badge">New</span>` : ""}
         </div>
-        <div class="emerging-keyword-meta">
+        <div class="keyword-insight-meta">
           <span class="context-pill">${escapeHtml(emergingSourceLabel(keyword.source))}</span>
           <span class="context-pill">${escapeHtml(platformLabel(keyword.platform))}</span>
           ${
@@ -347,7 +457,7 @@ function renderEmergingKeywordRow(keyword, topicContextKey, activeBoard) {
           }
         </div>
       </div>
-      <div class="emerging-keyword-stats">
+      <div class="keyword-insight-stats">
         <div>
           <span>Growth</span>
           <strong>+${formatPercent(keyword.growth)}</strong>
@@ -366,10 +476,41 @@ function renderEmergingKeywordRow(keyword, topicContextKey, activeBoard) {
   `;
 }
 
-function renderEmergingKeywordEmptyState() {
+function renderDecliningTrendRow(trend) {
   return `
-    <div class="emerging-keyword-empty">
-      No newly trending keywords match these filters.
+    <article class="keyword-insight-row declining-trend-row">
+      <div class="keyword-insight-main">
+        <div class="keyword-insight-title">
+          <strong>${escapeHtml(trend.label)}</strong>
+        </div>
+        <div class="keyword-insight-meta">
+          <span class="context-pill">${escapeHtml(emergingSourceLabel(trend.source))}</span>
+          <span class="context-pill">${escapeHtml(platformLabel(trend.platform))}</span>
+          ${
+            trend.sampleCreators?.length
+              ? `<span>${escapeHtml(trend.sampleCreators.slice(0, 3).join(", "))}</span>`
+              : ""
+          }
+        </div>
+      </div>
+      <div class="keyword-insight-stats declining-trend-stats">
+        <div>
+          <span>Decline</span>
+          <strong>-${formatPercent(trend.decline)}</strong>
+        </div>
+        <div>
+          <span>Mentions</span>
+          <strong>${formatCompactNumber(trend.currentMentions)}</strong>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderKeywordInsightEmptyState(message) {
+  return `
+    <div class="keyword-insight-empty">
+      ${escapeHtml(message)}
     </div>
   `;
 }
@@ -869,16 +1010,55 @@ function currentEmergingKeywords() {
   return sortEmergingKeywords(dedupeEmergingKeywords(searched)).slice(0, 8);
 }
 
+function currentDecliningTrends() {
+  const selectedReferences = selectedReferenceCreators();
+  const canShowReference = Boolean(
+    activeCustomTrendBoard() && selectedReferences.length,
+  );
+  const entries = [
+    ...sphereDecliningTrends(),
+    ...(canShowReference ? referenceDecliningTrends(selectedReferences) : []),
+  ];
+  const sourceFiltered =
+    state.decliningTrendSource === "all"
+      ? entries
+      : entries.filter((entry) => entry.source === state.decliningTrendSource);
+  const platformFiltered =
+    state.decliningTrendPlatform === "all"
+      ? sourceFiltered
+      : sourceFiltered.filter(
+          (entry) => entry.platform === state.decliningTrendPlatform,
+        );
+  const query = state.decliningTrendSearch.trim().toLowerCase();
+  const searched = query
+    ? platformFiltered.filter((entry) =>
+        [
+          entry.label,
+          entry.source,
+          entry.platform,
+          ...(entry.sampleCreators || []),
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(query),
+      )
+    : platformFiltered;
+  return sortDecliningTrends(dedupeKeywordInsights(searched)).slice(0, 8);
+}
+
 function sphereEmergingKeywords() {
   const context = currentTrendLabel().toLowerCase();
   return normalizedEmergingKeywordSnapshots().filter((entry) => {
     if (entry.source !== "sphere") return false;
-    const tags = (entry.sphereTags || []).map((tag) => tag.toLowerCase());
-    if (state.trendMode === "genre") return tags.includes(context);
-    const haystack = [entry.label, ...tags, ...(entry.sampleCreators || [])]
-      .join(" ")
-      .toLowerCase();
-    return haystack.includes(context) || context.includes(entry.label);
+    return matchesCurrentTrendContext(entry, context);
+  });
+}
+
+function sphereDecliningTrends() {
+  const context = currentTrendLabel().toLowerCase();
+  return normalizedDecliningTrendSnapshots().filter((entry) => {
+    if (entry.source !== "sphere") return false;
+    return matchesCurrentTrendContext(entry, context);
   });
 }
 
@@ -892,6 +1072,19 @@ function referenceEmergingKeywords(references) {
   return sortEmergingKeywords([
     ...snapshotEntries,
     ...derivedReferenceEmergingKeywords(references),
+  ]);
+}
+
+function referenceDecliningTrends(references) {
+  const selectedIds = new Set(references.map((creator) => creator.id));
+  const snapshotEntries = normalizedDecliningTrendSnapshots().filter(
+    (entry) =>
+      entry.source === "reference" &&
+      (entry.referenceCreatorIds || []).some((id) => selectedIds.has(id)),
+  );
+  return sortDecliningTrends([
+    ...snapshotEntries,
+    ...derivedReferenceDecliningTrends(references),
   ]);
 }
 
@@ -937,7 +1130,63 @@ function derivedReferenceEmergingKeywords(references) {
   return rows;
 }
 
+function derivedReferenceDecliningTrends(references) {
+  const rows = [];
+  const seen = new Set();
+  references.forEach((creator, creatorIndex) => {
+    const lookalikes = fallbackCreatorResults.filter((profile) =>
+      (creator.lookalikeCreatorIds || []).includes(profile.id),
+    );
+    const labels = [
+      ...(creator.topics || []),
+      ...lookalikes.flatMap((profile) => profile.matchTopics || []),
+    ].filter((label) => !trendGenres.includes(label));
+
+    labels.slice().reverse().forEach((label, labelIndex) => {
+      const key = label.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      const matchedLookalikes = lookalikes.filter((profile) =>
+        (profile.matchTopics || []).some(
+          (topic) => topic.toLowerCase() === key,
+        ),
+      );
+      const previousMentions = 620 + key.length * 16 + labelIndex * 28;
+      rows.push(
+        normalizeDecliningTrend({
+          label,
+          source: "reference",
+          platform: creator.platform,
+          currentMentions: Math.max(
+            80,
+            Math.round(previousMentions * (0.38 + ((labelIndex + creatorIndex) % 3) * 0.08)),
+          ),
+          previousMentions,
+          sampleCreators: [
+            creator.handle,
+            ...matchedLookalikes.map((profile) => profile.handle),
+          ].slice(0, 3),
+        }),
+      );
+    });
+  });
+  return rows;
+}
+
+function matchesCurrentTrendContext(entry, context) {
+  const tags = (entry.sphereTags || []).map((tag) => tag.toLowerCase());
+  if (state.trendMode === "genre") return tags.includes(context);
+  const haystack = [entry.label, ...tags, ...(entry.sampleCreators || [])]
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(context) || context.includes(entry.label);
+}
+
 function dedupeEmergingKeywords(entries) {
+  return dedupeKeywordInsights(entries);
+}
+
+function dedupeKeywordInsights(entries) {
   const seen = new Set();
   return entries.filter((entry) => {
     const key = `${entry.source}:${entry.platform}:${entry.label.toLowerCase()}`;
@@ -953,6 +1202,13 @@ function emergingKeywordsNote() {
     return "Rising terms from this sphere and selected reference creators";
   }
   return "Rising terms in the selected sphere";
+}
+
+function decliningTrendsNote() {
+  if (activeCustomTrendBoard() && selectedReferenceCreators().length) {
+    return "Terms losing momentum in this sphere and selected references";
+  }
+  return "Terms losing momentum in this sphere";
 }
 
 function emergingSourceOptions() {

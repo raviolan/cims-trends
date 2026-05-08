@@ -52,6 +52,26 @@ export function clearEmergingKeywordFilters() {
   state.emergingKeywordPlatform = "all";
 }
 
+export function setDecliningTrendSearch(query) {
+  state.decliningTrendSearch = String(query || "").trim();
+}
+
+export function setDecliningTrendSource(source) {
+  const allowed = ["all", "sphere", "reference"];
+  if (allowed.includes(source)) state.decliningTrendSource = source;
+}
+
+export function setDecliningTrendPlatform(platform) {
+  const allowed = ["all", "instagram", "tiktok", "youtube"];
+  if (allowed.includes(platform)) state.decliningTrendPlatform = platform;
+}
+
+export function clearDecliningTrendFilters() {
+  state.decliningTrendSearch = "";
+  state.decliningTrendSource = "all";
+  state.decliningTrendPlatform = "all";
+}
+
 export function selectTrendBoard(boardId) {
   if (
     boardId === "main" ||

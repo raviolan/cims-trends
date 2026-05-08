@@ -12,6 +12,9 @@ export const state = {
   emergingKeywordSearch: "",
   emergingKeywordSource: "all",
   emergingKeywordPlatform: "all",
+  decliningTrendSearch: "",
+  decliningTrendSource: "all",
+  decliningTrendPlatform: "all",
   customTrendBoards: [
     {
       id: "demo-breakfast",

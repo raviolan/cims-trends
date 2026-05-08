@@ -2,6 +2,7 @@ import {
   addCustomTrendReferenceCreator,
   addTrendTopic,
   clearCustomTrendBoard,
+  clearDecliningTrendFilters,
   clearEmergingKeywordFilters,
   createCustomTrendBoard,
   renameCustomTrendBoard,
@@ -10,11 +11,15 @@ import {
   setActiveTopic,
   setCreatorView,
   setCustomTrendCreatorSearch,
+  setDecliningTrendPlatform,
+  setDecliningTrendSearch,
+  setDecliningTrendSource,
   setEmergingKeywordSearch,
   setGlobalView,
   setTrendGenre,
   setTrendSearch,
 } from "../src/actions.js";
+import { readFileSync } from "node:fs";
 import {
   renderContent,
   renderOverview,
@@ -25,6 +30,10 @@ import { renderTrendExploration } from "../src/renderTrendExploration.js";
 import { state } from "../src/state.js";
 
 const assertions = [];
+const trendExplorationCss = readFileSync(
+  new URL("../styles/trend-exploration.css", import.meta.url),
+  "utf8",
+);
 
 function assert(name, condition) {
   assertions.push([name, Boolean(condition)]);
@@ -74,8 +83,33 @@ assert(
   demoTrend.includes("Newly trending keywords"),
 );
 assert(
+  "Keyword insight wrapper renders",
+  demoTrend.includes("trend-keyword-insights"),
+);
+assert(
+  "Both keyword insight lists render",
+  (demoTrend.match(/data-keyword-insight-list=/g) || []).length === 2,
+);
+assert(
+  "Keyword insight lists use internal scroll styling",
+  trendExplorationCss.includes(".keyword-insight-list") &&
+    trendExplorationCss.includes("overflow-y: auto") &&
+    trendExplorationCss.includes("max-height: 380px"),
+);
+assert("Declining trends renders", demoTrend.includes("Declining trends"));
+assert(
+  "Declining controls render",
+  demoTrend.includes("data-declining-trend-search") &&
+    demoTrend.includes('data-declining-trend-source="reference"') &&
+    demoTrend.includes('data-declining-trend-platform="tiktok"'),
+);
+assert(
   "Breakfast demo renders food emerging keyword",
   demoTrend.includes("freezer breakfast prep"),
+);
+assert(
+  "Breakfast demo renders declining food trend",
+  demoTrend.includes("whipped coffee"),
 );
 assert(
   "Emerging source filters render",
@@ -85,6 +119,29 @@ assert(
   "Reference emerging keywords render for breakfast custom board",
   demoTrend.includes("grocery haul breakfast"),
 );
+setDecliningTrendSearch("whipped");
+const searchedDecliningTrends = renderTrendExploration();
+assert(
+  "Declining trend search filters results",
+  searchedDecliningTrends.includes("whipped coffee") &&
+    !searchedDecliningTrends.includes("overnight oats jar"),
+);
+clearDecliningTrendFilters();
+setDecliningTrendSource("reference");
+const referenceDecliningTrends = renderTrendExploration();
+assert(
+  "Declining source filter shows reference trends",
+  referenceDecliningTrends.includes("cold brew breakfast") &&
+    !referenceDecliningTrends.includes("whipped coffee"),
+);
+setDecliningTrendPlatform("tiktok");
+const tiktokDecliningTrends = renderTrendExploration();
+assert(
+  "Declining platform filter applies",
+  tiktokDecliningTrends.includes("cold brew breakfast") &&
+    !tiktokDecliningTrends.includes("meal prep containers"),
+);
+clearDecliningTrendFilters();
 setEmergingKeywordSearch("pancakes");
 const searchedEmergingKeywords = renderTrendExploration();
 assert(
@@ -138,6 +195,10 @@ clearEmergingKeywordFilters();
 assert(
   "Main board does not show reference-only emerging entries",
   !renderTrendExploration().includes("protein breakfast bowl"),
+);
+assert(
+  "Main board does not show reference-only declining entries",
+  !renderTrendExploration().includes("cold brew breakfast"),
 );
 setTrendGenre("Gaming");
 const trend = renderTrendExploration();
